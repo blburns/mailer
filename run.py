@@ -184,10 +184,7 @@ if __name__ == '__main__':
 
 def check_python_version():
     """Check if Python version is compatible"""
-    if sys.version_info >= (3, 13):
-        print("ERROR: Python 3.13+ is not supported. Please use Python 3.8-3.12")
-        return False
-    elif sys.version_info < (3, 8):
+    if sys.version_info < (3, 8):
         print("ERROR: Python 3.8+ is required")
         return False
     
