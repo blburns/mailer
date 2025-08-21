@@ -4,6 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}{{ title or 'Postfix Manager' }}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {}
+        }
+      }
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
     {% block head %}{% endblock %}
     <script>
@@ -127,11 +136,13 @@
         var btn = document.getElementById('theme-toggle');
         var iconSun = document.getElementById('icon-sun');
         var iconMoon = document.getElementById('icon-moon');
+        
         function updateIcons() {
           var isDark = document.documentElement.classList.contains('dark');
           iconSun.classList.toggle('hidden', !isDark);
           iconMoon.classList.toggle('hidden', isDark);
         }
+        
         function setTheme(theme) {
           if (theme === 'dark') {
             document.documentElement.classList.add('dark');
@@ -141,10 +152,12 @@
           localStorage.setItem('theme', theme);
           updateIcons();
         }
+        
         btn && btn.addEventListener('click', function() {
           var isDark = document.documentElement.classList.contains('dark');
           setTheme(isDark ? 'light' : 'dark');
         });
+        
         updateIcons();
       })();
     </script>

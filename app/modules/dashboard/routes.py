@@ -72,11 +72,27 @@ def new_domain():
         if MailDomain.query.filter_by(domain=domain_name).first():
             return jsonify({'success': False, 'message': 'Domain already exists'})
         
+        # Get LDAP fields from form or generate defaults
+        ldap_base_dn = data.get('ldap_base_dn', '').strip()
+        ldap_admin_dn = data.get('ldap_admin_dn', '').strip()
+        
+        # If not provided, generate default values
+        if not ldap_base_dn:
+            parts = domain_name.split('.')
+            if len(parts) >= 2:
+                ldap_base_dn = ','.join([f'dc={part}' for part in parts])
+            else:
+                ldap_base_dn = f'dc={domain_name}'
+        
+        if not ldap_admin_dn:
+            ldap_admin_dn = f'cn=admin,{ldap_base_dn}'
+        
         # Create domain
         domain = MailDomain(
             domain=domain_name,
-            ldap_base_dn=f"dc={domain_name.split('.')[0]},dc={domain_name.split('.')[1]}",
-            ldap_admin_dn=f"cn=admin,dc={domain_name.split('.')[0]},dc={domain_name.split('.')[1]}"
+            ldap_base_dn=ldap_base_dn,
+            ldap_admin_dn=ldap_admin_dn,
+            is_active=data.get('is_active', True)
         )
         
         try:
@@ -89,7 +105,7 @@ def new_domain():
                 action='create_domain',
                 resource_type='mail_domain',
                 resource_id=str(domain.id),
-                details=f'Created domain: {domain_name}',
+                details=f'Created domain: {domain_name} with LDAP Base DN: {ldap_base_dn}',
                 ip_address=request.remote_addr
             )
             db.session.add(audit_log)
