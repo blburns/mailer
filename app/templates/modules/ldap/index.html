@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}LDAP Management{% endblock %}
+{% block content %}
+  <div class="max-w-screen-xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-6">
+      LDAP Directory Management
+    </h1>
+    <p class="text-gray-600 dark:text-gray-400 mb-8">
+      Manage OpenLDAP directory service
+    </p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">OpenLDAP Server</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Directory Service</p>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span>Status:</span>
+            <span class="text-green-600 dark:text-green-400">Running</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Connections:</span>
+            <span>0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Base DN:</span>
+            <span>dc=example,dc=com</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Directory Browser</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Browse LDAP tree structure</p>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span>Entries:</span>
+            <span>0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Last Backup:</span>
+            <span>Never</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

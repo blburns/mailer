@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Mail Server{% endblock %}
+{% block content %}
+  <div class="max-w-screen-xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-6">
+      Mail Server Management
+    </h1>
+    <p class="text-gray-600 dark:text-gray-400 mb-8">
+      Manage Postfix and Dovecot services
+    </p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Postfix MTA</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Mail Transfer Agent</p>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span>Status:</span>
+            <span class="text-green-600 dark:text-green-400">Running</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Queue Size:</span>
+            <span>0</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Dovecot IMAP</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">IMAP/POP3 Server</p>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span>Status:</span>
+            <span class="text-green-600 dark:text-green-400">Running</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Connections:</span>
+            <span>0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
