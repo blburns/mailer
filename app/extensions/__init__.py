@@ -3,19 +3,20 @@ Flask Extensions Initialization
 """
 
 import os
-import sys
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_login import LoginManager
 
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
 bcrypt = Bcrypt()
 csrf = CSRFProtect()
+login_manager = LoginManager()
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"]
@@ -28,7 +29,17 @@ def init_extensions(app):
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     csrf.init_app(app)
+    login_manager.init_app(app)
     limiter.init_app(app)
+    
+    # Configure login manager
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Please log in to access this page.'
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        from app.models import User
+        return User.query.get(int(user_id))
 
 
 def init_mail_config(app):
@@ -42,7 +53,6 @@ def init_logging_config(app):
     if not app.debug:
         import logging
         from logging.handlers import RotatingFileHandler
-        import os
         
         if not os.path.exists('logs'):
             os.mkdir('logs')
@@ -65,7 +75,9 @@ def init_csrf_config(app):
 def init_config(app):
     """Initialize application configuration."""
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///postfix_manager.db'
+    # Get the absolute path to the database file
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'db', 'postfix_manager.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Postfix Manager specific config
@@ -93,7 +105,7 @@ def init_template_context(app):
 
 def register_blueprints(app):
     """Register Flask blueprints."""
-    from app.modules.main import bp as main_bp
+    from app.main import bp as main_bp
     from app.modules.auth import bp as auth_bp
     from app.modules.mail import bp as mail_bp
     from app.modules.ldap import bp as ldap_bp

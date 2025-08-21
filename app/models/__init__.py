@@ -5,6 +5,7 @@ Database Models for Postfix Manager
 from app.extensions import db
 from datetime import datetime
 import enum
+from flask_login import UserMixin
 
 
 class UserRole(enum.Enum):
@@ -13,7 +14,7 @@ class UserRole(enum.Enum):
     READONLY = "readonly"
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     """User model for authentication and authorization."""
     __tablename__ = 'users'
     
