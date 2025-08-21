@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% block title %}System Configuration{% endblock %}
+{% block content %}
+  <div class="max-w-screen-xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">
+        System Configuration
+      </h1>
+      <p class="mt-2 text-gray-600 dark:text-gray-400">
+        Manage system-wide configuration settings
+      </p>
+    </div>
+
+    <!-- Configuration Settings -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Configuration Settings</h3>
+      </div>
+      
+      {% if configs %}
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Setting
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Value
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Description
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Last Updated
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {% for config in configs %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ config.key }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900 dark:text-white max-w-xs truncate">
+                      {{ config.value or 'Not set' }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+                      {{ config.description or 'No description' }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {{ config.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
+                            onclick="editConfig('{{ config.key }}', '{{ config.value or '' }}', '{{ config.description or '' }}')">
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="px-6 py-12 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No configuration</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            No system configuration settings found.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Mail Server</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Configure Postfix and Dovecot settings</p>
+        <a href="{{ url_for('mail.index') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+          Configure →
+        </a>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">LDAP Settings</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Manage OpenLDAP configuration</p>
+        <a href="{{ url_for('ldap.index') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+          Configure →
+        </a>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">System Status</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Monitor system health and performance</p>
+        <a href="{{ url_for('main.status') }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+          View Status →
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Configuration Modal -->
+  <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Edit Configuration</h3>
+        <form id="editConfigForm" class="space-y-4">
+          <div>
+            <label for="editKey" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Setting Key
+            </label>
+            <input type="text" 
+                   id="editKey" 
+                   readonly
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-600 dark:border-gray-600 dark:text-white">
+          </div>
+          
+          <div>
+            <label for="editValue" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Value
+            </label>
+            <input type="text" 
+                   id="editValue" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          </div>
+          
+          <div>
+            <label for="editDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description
+            </label>
+            <textarea id="editDescription" 
+                      rows="3"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+          </div>
+          
+          <div class="flex justify-end space-x-3">
+            <button type="button" 
+                    onclick="closeEditModal()"
+                    class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg">
+              Cancel
+            </button>
+            <button type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function editConfig(key, value, description) {
+      document.getElementById('editKey').value = key;
+      document.getElementById('editValue').value = value;
+      document.getElementById('editDescription').value = description;
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+    
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('editModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeEditModal();
+      }
+    });
+    
+    // Handle form submission
+    document.getElementById('editConfigForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        key: document.getElementById('editKey').value,
+        value: document.getElementById('editValue').value,
+        description: document.getElementById('editDescription').value
+      };
+      
+      // TODO: Implement save functionality
+      console.log('Saving config:', formData);
+      alert('Configuration updated successfully!');
+      closeEditModal();
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}New Domain{% endblock %}
+{% block content %}
+  <div class="max-w-screen-xl mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">
+          Create New Domain
+        </h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">
+          Add a new mail domain to your system
+        </p>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <form id="newDomainForm" class="space-y-6">
+          <div>
+            <label for="domain" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Domain Name
+            </label>
+            <input type="text" 
+                   id="domain" 
+                   name="domain" 
+                   required
+                   placeholder="example.com"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Enter the domain name (e.g., example.com)
+            </p>
+          </div>
+          
+          <div>
+            <label for="ldap_base_dn" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              LDAP Base DN
+            </label>
+            <input type="text" 
+                   id="ldap_base_dn" 
+                   name="ldap_base_dn" 
+                   readonly
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-600 dark:border-gray-600 dark:text-white">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              This will be automatically generated from the domain name
+            </p>
+          </div>
+          
+          <div>
+            <label for="ldap_admin_dn" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              LDAP Admin DN
+            </label>
+            <input type="text" 
+                   id="ldap_admin_dn" 
+                   name="ldap_admin_dn" 
+                   readonly
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 dark:bg-gray-600 dark:border-gray-600 dark:text-white">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              This will be automatically generated from the domain name
+            </p>
+          </div>
+          
+          <div class="flex items-center">
+            <input type="checkbox" 
+                   id="is_active" 
+                   name="is_active" 
+                   checked
+                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="is_active" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+              Domain is active
+            </label>
+          </div>
+          
+          <div class="flex items-center justify-between pt-4">
+            <a href="{{ url_for('dashboard.domains') }}" 
+               class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+              ← Back to Domains
+            </a>
+            <button type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg">
+              Create Domain
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Auto-generate LDAP fields when domain changes
+    document.getElementById('domain').addEventListener('input', function() {
+      const domain = this.value.trim();
+      if (domain) {
+        const parts = domain.split('.');
+        if (parts.length >= 2) {
+          document.getElementById('ldap_base_dn').value = `dc=${parts[0]},dc=${parts[1]}`;
+          document.getElementById('ldap_admin_dn').value = `cn=admin,dc=${parts[0]},dc=${parts[1]}`;
+        }
+      } else {
+        document.getElementById('ldap_base_dn').value = '';
+        document.getElementById('ldap_admin_dn').value = '';
+      }
+    });
+    
+    // Handle form submission
+    document.getElementById('newDomainForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        domain: document.getElementById('domain').value.trim(),
+        is_active: document.getElementById('is_active').checked
+      };
+      
+      if (!formData.domain) {
+        alert('Please enter a domain name');
+        return;
+      }
+      
+      // Submit form data
+      fetch('{{ url_for("dashboard.new_domain") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Domain created successfully!');
+          window.location.href = '{{ url_for("dashboard.domains") }}';
+        } else {
+          alert('Error: ' + data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating the domain');
+      });
+    });
+  </script>
+{% endblock %}

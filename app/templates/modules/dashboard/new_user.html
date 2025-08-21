@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}New User{% endblock %}
+{% block content %}
+  <div class="max-w-screen-xl mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">
+          Create New User
+        </h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">
+          Add a new mail user to your system
+        </p>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <form id="newUserForm" class="space-y-6">
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Username
+            </label>
+            <input type="text" 
+                   id="username" 
+                   name="username" 
+                   required
+                   placeholder="username"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Enter the username (without domain)
+            </p>
+          </div>
+          
+          <div>
+            <label for="domain_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Domain
+            </label>
+            <select id="domain_id" 
+                    name="domain_id" 
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              <option value="">Select a domain</option>
+              {% for domain in domains %}
+                <option value="{{ domain.id }}" 
+                        {% if request.args.get('domain_id')|int == domain.id %}selected{% endif %}>
+                  {{ domain.domain }}
+                </option>
+              {% endfor %}
+            </select>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Select the domain for this user
+            </p>
+          </div>
+          
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Password
+            </label>
+            <input type="password" 
+                   id="password" 
+                   name="password" 
+                   required
+                   placeholder="Enter password"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Password for the mail user account
+            </p>
+          </div>
+          
+          <div>
+            <label for="quota" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Mailbox Quota (MB)
+            </label>
+            <input type="number" 
+                   id="quota" 
+                   name="quota" 
+                   min="0"
+                   value="0"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Set to 0 for unlimited quota
+            </p>
+          </div>
+          
+          <div class="flex items-center">
+            <input type="checkbox" 
+                   id="is_active" 
+                   name="is_active" 
+                   checked
+                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="is_active" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+              User account is active
+            </label>
+          </div>
+          
+          <div class="flex items-center justify-between pt-4">
+            <a href="{{ url_for('dashboard.users') }}" 
+               class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+              ← Back to Users
+            </a>
+            <button type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg">
+              Create User
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Handle form submission
+    document.getElementById('newUserForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        username: document.getElementById('username').value.trim(),
+        domain_id: document.getElementById('domain_id').value,
+        password: document.getElementById('password').value,
+        quota: parseInt(document.getElementById('quota').value) || 0,
+        is_active: document.getElementById('is_active').checked
+      };
+      
+      if (!formData.username || !formData.domain_id || !formData.password) {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      // Submit form data
+      fetch('{{ url_for("dashboard.new_user") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('User created successfully!');
+          window.location.href = '{{ url_for("dashboard.users") }}';
+        } else {
+          alert('Error: ' + data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating the user');
+      });
+    });
+  </script>
+{% endblock %}
