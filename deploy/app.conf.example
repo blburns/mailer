@@ -1,0 +1,32 @@
+# Application configuration (production/system)
+# Place at /etc/dreamlikelabs/mailer/app.conf
+
+# Core
+FLASK_SECRET_KEY=changeme
+COMPANY_NAME=DreamlikeLabs
+
+# Database
+DB_TYPE=sqlite
+DB_NAME=app.db
+# For non-sqlite:
+# DB_USER=
+# DB_PASS=
+# DB_HOST=
+# DB_PORT=
+
+# Mail
+SMTP_SERVER=localhost
+SMTP_PORT=587
+FROM_EMAIL=noreply@example.com
+SMTP_USE_TLS=False
+SMTP_USE_SSL=False
+
+# Logging
+LOG_LEVEL=INFO
+LOG_TO_CONSOLE=False
+
+# Data/Logs roots (optional overrides)
+DATA_DIR=/var/lib/dreamlikelabs/mailer/
+LOG_DIR=/var/log/dreamlikelabs/mailer/
+
+
