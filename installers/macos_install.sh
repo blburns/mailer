@@ -156,6 +156,7 @@ update_package_manager() {
         sudo -u $REAL_USER bash -c 'brew update'
         sudo -u $REAL_USER bash -c 'brew upgrade'
     elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
+        # MacPorts selfupdate and upgrade can be run as regular user
         sudo -u $REAL_USER bash -c 'port selfupdate'
         sudo -u $REAL_USER bash -c 'port upgrade outdated'
     fi
@@ -182,20 +183,20 @@ install_packages() {
         sudo -u $REAL_USER bash -c 'brew install openssl readline sqlite3 xz zlib'
         
     elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
-        # Core packages
-        sudo -u $REAL_USER bash -c 'port install python311'
+        # Core packages - MacPorts install requires sudo but should be run as user
+        sudo -u $REAL_USER bash -c 'sudo port install python311'
         
         # System packages
-        sudo -u $REAL_USER bash -c 'port install nginx'
+        sudo -u $REAL_USER bash -c 'sudo port install nginx'
         
         # Mail server packages
-        sudo -u $REAL_USER bash -c 'port install postfix'
+        sudo -u $REAL_USER bash -c 'sudo port install postfix'
         
         # LDAP packages
-        sudo -u $REAL_USER bash -c 'port install openldap2'
+        sudo -u $REAL_USER bash -c 'sudo port install openldap2'
         
         # Additional dependencies
-        sudo -u $REAL_USER bash -c 'port install openssl3 readline sqlite3 xz zlib'
+        sudo -u $REAL_USER bash -c 'sudo port install openssl3 readline sqlite3 xz zlib'
         
         # Create symlinks for MacPorts Python
         sudo ln -sf /opt/local/bin/python3.11 /opt/local/bin/python3
@@ -452,7 +453,7 @@ EOF
     if [[ "$PACKAGE_MANAGER" == "brew" ]]; then
         sudo -u $REAL_USER bash -c 'brew services restart nginx'
     elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
-        sudo -u $REAL_USER bash -c 'port load nginx'
+        sudo -u $REAL_USER bash -c 'sudo port load nginx'
     fi
     
     print_success "Nginx configured successfully"
@@ -518,7 +519,7 @@ display_summary() {
     if [[ "$PACKAGE_MANAGER" == "brew" ]]; then
         echo "  - Restart Nginx: brew services restart nginx"
     elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
-        echo "  - Restart Nginx: sudo port reload nginx"
+        echo "  - Restart Nginx: port reload nginx"
     fi
     echo
     echo "Please change the default admin password after first login!"
