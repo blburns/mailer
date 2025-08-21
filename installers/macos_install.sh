@@ -21,6 +21,14 @@ APP_CONFIG="/etc/postfix-manager"
 APP_LOG="/var/log/postfix-manager"
 APP_SERVICE="com.postfix-manager.service"
 
+# Package manager selection
+PACKAGE_MANAGER=""
+PACKAGE_MANAGER_NAME=""
+
+# Get the real user (not root when using sudo)
+REAL_USER=${SUDO_USER:-$USER}
+REAL_HOME=$(eval echo ~$REAL_USER)
+
 # Function to print colored output
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -67,44 +75,153 @@ detect_os() {
     fi
 }
 
-# Function to check if Homebrew is installed
-check_homebrew() {
-    if ! command -v brew &> /dev/null; then
-        print_error "Homebrew is not installed. Please install Homebrew first:"
-        echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-        exit 1
+# Function to detect available package managers
+detect_package_managers() {
+    print_status "Detecting available package managers..."
+    
+    HAS_HOMEBREW=false
+    HAS_MACPORTS=false
+    
+    # Check Homebrew as real user with proper environment
+    if sudo -u $REAL_USER bash -c 'command -v brew' &> /dev/null; then
+        HAS_HOMEBREW=true
+        BREW_VERSION=$(sudo -u $REAL_USER bash -c 'brew --version | head -n1')
+        print_status "Homebrew detected: $BREW_VERSION"
     fi
     
-    print_status "Homebrew detected: $(brew --version | head -n1)"
+    # Check MacPorts as real user
+    if sudo -u $REAL_USER bash -c 'command -v port' &> /dev/null; then
+        HAS_MACPORTS=true
+        PORT_VERSION=$(sudo -u $REAL_USER bash -c 'port version | head -n1')
+        print_status "MacPorts detected: $PORT_VERSION"
+    fi
+    
+    if [[ "$HAS_HOMEBREW" == false && "$HAS_MACPORTS" == false ]]; then
+        print_error "No package manager detected. Please install either Homebrew or MacPorts:"
+        echo
+        echo "Homebrew (recommended):"
+        echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+        echo
+        echo "MacPorts:"
+        echo "  Download from: https://www.macports.org/install.php"
+        echo
+        exit 1
+    fi
 }
 
-# Function to update Homebrew
-update_homebrew() {
-    print_status "Updating Homebrew packages..."
-    brew update
-    brew upgrade
+# Function to select package manager
+select_package_manager() {
+    if [[ "$HAS_HOMEBREW" == true && "$HAS_MACPORTS" == true ]]; then
+        echo
+        echo "Both Homebrew and MacPorts are available. Please choose one:"
+        echo "1) Homebrew (recommended - faster, more packages)"
+        echo "2) MacPorts (more Unix-like, system integration)"
+        echo
+        read -p "Enter your choice (1 or 2): " choice
+        
+        case $choice in
+            1)
+                PACKAGE_MANAGER="brew"
+                PACKAGE_MANAGER_NAME="Homebrew"
+                print_status "Selected Homebrew as package manager"
+                ;;
+            2)
+                PACKAGE_MANAGER="port"
+                PACKAGE_MANAGER_NAME="MacPorts"
+                print_status "Selected MacPorts as package manager"
+                ;;
+            *)
+                print_error "Invalid choice. Defaulting to Homebrew."
+                PACKAGE_MANAGER="brew"
+                PACKAGE_MANAGER_NAME="Homebrew"
+                ;;
+        esac
+    elif [[ "$HAS_HOMEBREW" == true ]]; then
+        PACKAGE_MANAGER="brew"
+        PACKAGE_MANAGER_NAME="Homebrew"
+        print_status "Using Homebrew (only option available)"
+    elif [[ "$HAS_MACPORTS" == true ]]; then
+        PACKAGE_MANAGER="port"
+        PACKAGE_MANAGER_NAME="MacPorts"
+        print_status "Using MacPorts (only option available)"
+    fi
 }
 
-# Function to install required packages via Homebrew
+# Function to update package manager
+update_package_manager() {
+    print_status "Updating $PACKAGE_MANAGER_NAME packages..."
+    
+    if [[ "$PACKAGE_MANAGER" == "brew" ]]; then
+        # Use bash -c to ensure proper environment
+        sudo -u $REAL_USER bash -c 'brew update'
+        sudo -u $REAL_USER bash -c 'brew upgrade'
+    elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
+        sudo -u $REAL_USER bash -c 'port selfupdate'
+        sudo -u $REAL_USER bash -c 'port upgrade outdated'
+    fi
+}
+
+# Function to install required packages
 install_packages() {
-    print_status "Installing required packages via Homebrew..."
+    print_status "Installing required packages via $PACKAGE_MANAGER_NAME..."
     
-    # Core packages
-    brew install python@3.11
-    
-    # System packages
-    brew install nginx
-    
-    # Mail server packages
-    brew install postfix
-    
-    # LDAP packages
-    brew install openldap
-    
-    # Additional dependencies
-    brew install openssl readline sqlite3 xz zlib
+    if [[ "$PACKAGE_MANAGER" == "brew" ]]; then
+        # Core packages
+        sudo -u $REAL_USER bash -c 'brew install python@3.11'
+        
+        # System packages
+        sudo -u $REAL_USER bash -c 'brew install nginx'
+        
+        # Mail server packages
+        sudo -u $REAL_USER bash -c 'brew install postfix'
+        
+        # LDAP packages
+        sudo -u $REAL_USER bash -c 'brew install openldap'
+        
+        # Additional dependencies
+        sudo -u $REAL_USER bash -c 'brew install openssl readline sqlite3 xz zlib'
+        
+    elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
+        # Core packages
+        sudo -u $REAL_USER bash -c 'port install python311'
+        
+        # System packages
+        sudo -u $REAL_USER bash -c 'port install nginx'
+        
+        # Mail server packages
+        sudo -u $REAL_USER bash -c 'port install postfix'
+        
+        # LDAP packages
+        sudo -u $REAL_USER bash -c 'port install openldap2'
+        
+        # Additional dependencies
+        sudo -u $REAL_USER bash -c 'port install openssl3 readline sqlite3 xz zlib'
+        
+        # Create symlinks for MacPorts Python
+        sudo ln -sf /opt/local/bin/python3.11 /opt/local/bin/python3
+        sudo ln -sf /opt/local/bin/pip3.11 /opt/local/bin/pip3
+    fi
     
     print_success "Required packages installed successfully"
+}
+
+# Function to get package paths based on package manager
+get_package_paths() {
+    if [[ "$PACKAGE_MANAGER" == "brew" ]]; then
+        PYTHON_PATH="/usr/local/bin/python3"
+        NGINX_CONFIG_DIR="/usr/local/etc/nginx"
+        NGINX_BIN="/usr/local/bin/nginx"
+        LDAP_CONFIG_DIR="/usr/local/etc/openldap"
+        LDAP_DATA_DIR="/usr/local/var/openldap-data"
+        LDAP_RUN_DIR="/usr/local/var/run"
+    elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
+        PYTHON_PATH="/opt/local/bin/python3"
+        NGINX_CONFIG_DIR="/opt/local/etc/nginx"
+        NGINX_BIN="/opt/local/bin/nginx"
+        LDAP_CONFIG_DIR="/opt/local/etc/openldap"
+        LDAP_DATA_DIR="/opt/local/var/openldap-data"
+        LDAP_RUN_DIR="/opt/local/var/run"
+    fi
 }
 
 # Function to create application user and group
@@ -168,7 +285,7 @@ install_python_app() {
     
     # Create virtual environment
     cd $APP_HOME
-    python3 -m venv venv
+    $PYTHON_PATH -m venv venv
     
     # Activate virtual environment and install dependencies
     source venv/bin/activate
@@ -224,16 +341,16 @@ configure_ldap() {
     print_status "Configuring OpenLDAP..."
     
     # Create LDAP configuration directory
-    mkdir -p /usr/local/etc/openldap/slapd.d
+    mkdir -p $LDAP_CONFIG_DIR/slapd.d
     
     # Create basic LDAP configuration
-    cat > /usr/local/etc/openldap/slapd.conf << EOF
-include /usr/local/etc/openldap/schema/core.schema
-include /usr/local/etc/openldap/schema/cosine.schema
-include /usr/local/etc/openldap/schema/inetorgperson.schema
+    cat > $LDAP_CONFIG_DIR/slapd.conf << EOF
+include $LDAP_CONFIG_DIR/schema/core.schema
+include $LDAP_CONFIG_DIR/schema/cosine.schema
+include $LDAP_CONFIG_DIR/schema/inetorgperson.schema
 
-pidfile /usr/local/var/run/slapd.pid
-argsfile /usr/local/var/run/slapd.args
+pidfile $LDAP_RUN_DIR/slapd.pid
+argsfile $LDAP_RUN_DIR/slapd.args
 
 database config
 rootdn "cn=admin,cn=config"
@@ -247,16 +364,16 @@ database bdb
 suffix "dc=example,dc=com"
 rootdn "cn=admin,dc=example,dc=com"
 rootpw admin
-directory /usr/local/var/openldap-data
+directory $LDAP_DATA_DIR
 index objectClass eq
 EOF
     
     # Create LDAP data directory
-    mkdir -p /usr/local/var/openldap-data
+    mkdir -p $LDAP_DATA_DIR
     
     # Set permissions
-    chown -R _ldap:_ldap /usr/local/var/openldap-data
-    chmod 700 /usr/local/var/openldap-data
+    chown -R _ldap:_ldap $LDAP_DATA_DIR
+    chmod 700 $LDAP_DATA_DIR
     
     print_success "OpenLDAP configured successfully"
 }
@@ -313,7 +430,7 @@ configure_nginx() {
     print_status "Configuring Nginx..."
     
     # Create Nginx configuration
-    cat > /usr/local/etc/nginx/servers/postfix-manager.conf << EOF
+    cat > $NGINX_CONFIG_DIR/servers/postfix-manager.conf << EOF
 server {
     listen 80;
     server_name localhost;
@@ -329,10 +446,14 @@ server {
 EOF
     
     # Test Nginx configuration
-    nginx -t
+    $NGINX_BIN -t
     
     # Reload Nginx
-    brew services restart nginx
+    if [[ "$PACKAGE_MANAGER" == "brew" ]]; then
+        sudo -u $REAL_USER bash -c 'brew services restart nginx'
+    elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
+        sudo -u $REAL_USER bash -c 'port load nginx'
+    fi
     
     print_success "Nginx configured successfully"
 }
@@ -370,8 +491,8 @@ setup_firewall() {
     print_status "Setting up firewall rules..."
     
     # Allow HTTP and HTTPS
-    /usr/libexec/ApplicationFirewall/socketfilterfw --add /usr/local/bin/nginx
-    /usr/libexec/ApplicationFirewall/socketfilterfw --add /usr/local/bin/python3
+    /usr/libexec/ApplicationFirewall/socketfilterfw --add $NGINX_BIN
+    /usr/libexec/ApplicationFirewall/socketfilterfw --add $PYTHON_PATH
     
     print_success "Firewall rules configured successfully"
 }
@@ -381,6 +502,7 @@ display_summary() {
     print_success "Installation completed successfully!"
     echo
     echo "Postfix Manager has been installed with the following details:"
+    echo "  - Package Manager: $PACKAGE_MANAGER_NAME"
     echo "  - Application Home: $APP_HOME"
     echo "  - Configuration: $APP_CONFIG"
     echo "  - Logs: $APP_LOG"
@@ -393,7 +515,11 @@ display_summary() {
     echo "  - Start service: sudo launchctl load /Library/LaunchDaemons/$APP_SERVICE.plist"
     echo "  - Stop service: sudo launchctl unload /Library/LaunchDaemons/$APP_SERVICE.plist"
     echo "  - View logs: tail -f $APP_LOG/postfix-manager.log"
-    echo "  - Restart Nginx: brew services restart nginx"
+    if [[ "$PACKAGE_MANAGER" == "brew" ]]; then
+        echo "  - Restart Nginx: brew services restart nginx"
+    elif [[ "$PACKAGE_MANAGER" == "port" ]]; then
+        echo "  - Restart Nginx: sudo port reload nginx"
+    fi
     echo
     echo "Please change the default admin password after first login!"
 }
@@ -407,8 +533,10 @@ main() {
     
     check_root
     detect_os
-    check_homebrew
-    update_homebrew
+    detect_package_managers
+    select_package_manager
+    get_package_paths
+    update_package_manager
     install_packages
     create_app_user
     create_directories
