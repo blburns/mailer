@@ -4,7 +4,7 @@ Authentication Routes
 
 from flask import render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.urls import url_parse
+from urllib.parse import urlparse
 from app.modules.auth import bp
 from app.modules.auth.forms import LoginForm, ChangePasswordForm
 from app.models import User, AuditLog
@@ -37,13 +37,13 @@ def login():
             db.session.commit()
             
             next_page = request.args.get('next')
-            if not next_page or url_parse(next_page).netloc != '':
+            if not next_page or urlparse(next_page).netloc != '':
                 next_page = url_for('dashboard.index')
             return redirect(next_page)
         else:
             flash('Invalid username or password', 'error')
     
-    return render_template('auth/login.html', title='Sign In', form=form)
+    return render_template('modules/auth/login.html', title='Sign In', form=form)
 
 
 @bp.route('/logout')
@@ -89,4 +89,4 @@ def change_password():
         else:
             flash('Invalid current password.', 'error')
     
-    return render_template('auth/change_password.html', title='Change Password', form=form)
+    return render_template('modules/auth/change_password.html', title='Change Password', form=form)

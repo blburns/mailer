@@ -4,7 +4,7 @@ Mail Management Routes
 
 from flask import render_template, request, jsonify, flash
 from flask_login import login_required, current_user
-from app.mail import bp
+from app.modules.mail import bp
 from app.models import AuditLog
 from app.extensions import db
 from app.utils.mail_manager import PostfixManager, DovecotManager
@@ -15,21 +15,21 @@ import json
 @login_required
 def index():
     """Mail management dashboard."""
-    return render_template('mail/index.html', title='Mail Management')
+    return render_template('modules/mail/index.html', title='Mail Management')
 
 
 @bp.route('/postfix')
 @login_required
 def postfix():
     """Postfix management."""
-    return render_template('mail/postfix.html', title='Postfix Management')
+    return render_template('modules/mail/postfix.html', title='Postfix Management')
 
 
 @bp.route('/dovecot')
 @login_required
 def dovecot():
     """Dovecot management."""
-    return render_template('mail/dovecot.html', title='Dovecot Management')
+    return render_template('modules/mail/dovecot.html', title='Dovecot Management')
 
 
 @bp.route('/postfix/status')

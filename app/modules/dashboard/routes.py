@@ -36,7 +36,7 @@ def index():
         dovecot_status = {'status': 'error', 'message': str(e)}
         ldap_status = {'status': 'error', 'message': str(e)}
     
-    return render_template('dashboard/index.html',
+    return render_template('modules/dashboard/index.html',
                          title='Dashboard',
                          total_domains=total_domains,
                          total_users=total_users,
@@ -53,7 +53,7 @@ def index():
 def domains():
     """Mail domains management."""
     domains = MailDomain.query.all()
-    return render_template('dashboard/domains.html', title='Mail Domains', domains=domains)
+    return render_template('modules/dashboard/domains.html', title='Mail Domains', domains=domains)
 
 
 @bp.route('/domains/new', methods=['GET', 'POST'])
@@ -100,7 +100,7 @@ def new_domain():
             db.session.rollback()
             return jsonify({'success': False, 'message': f'Error creating domain: {str(e)}'})
     
-    return render_template('dashboard/new_domain.html', title='New Domain')
+    return render_template('modules/dashboard/new_domain.html', title='New Domain')
 
 
 @bp.route('/domains/<int:domain_id>')
@@ -109,7 +109,7 @@ def domain_detail(domain_id):
     """Domain detail view."""
     domain = MailDomain.query.get_or_404(domain_id)
     users = MailUser.query.filter_by(domain_id=domain_id).all()
-    return render_template('dashboard/domain_detail.html', title=f'Domain: {domain.domain}', domain=domain, users=users)
+    return render_template('modules/dashboard/domain_detail.html', title=f'Domain: {domain.domain}', domain=domain, users=users)
 
 
 @bp.route('/users')
@@ -117,7 +117,7 @@ def domain_detail(domain_id):
 def users():
     """Mail users management."""
     users = MailUser.query.join(MailDomain).all()
-    return render_template('dashboard/users.html', title='Mail Users', users=users)
+    return render_template('modules/dashboard/users.html', title='Mail Users', users=users)
 
 
 @bp.route('/users/new', methods=['GET', 'POST'])
@@ -175,7 +175,7 @@ def new_user():
             return jsonify({'success': False, 'message': f'Error creating user: {str(e)}'})
     
     domains = MailDomain.query.filter_by(is_active=True).all()
-    return render_template('dashboard/new_user.html', title='New User', domains=domains)
+    return render_template('modules/dashboard/new_user.html', title='New User', domains=domains)
 
 
 @bp.route('/system')
@@ -183,7 +183,7 @@ def new_user():
 def system():
     """System configuration."""
     configs = SystemConfig.query.all()
-    return render_template('dashboard/system.html', title='System Configuration', configs=configs)
+    return render_template('modules/dashboard/system.html', title='System Configuration', configs=configs)
 
 
 @bp.route('/logs')
@@ -193,4 +193,4 @@ def logs():
     page = request.args.get('page', 1, type=int)
     logs = AuditLog.query.order_by(AuditLog.created_at.desc()).paginate(
         page=page, per_page=50, error_out=False)
-    return render_template('dashboard/logs.html', title='Audit Logs', logs=logs)
+    return render_template('modules/dashboard/logs.html', title='Audit Logs', logs=logs)

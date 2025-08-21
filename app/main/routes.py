@@ -9,16 +9,16 @@ from app.main import bp
 @bp.route('/')
 def index():
     """Homepage."""
-    return render_template('main/index.html', title='Home')
+    return render_template('modules/main/index.html', title='Home')
 
 
 @bp.route('/about')
 def about():
     """About page."""
-    return render_template('main/about.html', title='About')
+    return render_template('modules/main/about.html', title='About')
 
 
 @bp.route('/status')
 def status():
     """System status page."""
-    return render_template('main/status.html', title='System Status')
+    return render_template('modules/main/status.html', title='System Status')

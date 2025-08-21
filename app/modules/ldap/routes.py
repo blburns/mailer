@@ -4,7 +4,7 @@ LDAP Management Routes
 
 from flask import render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
-from app.ldap import bp
+from app.modules.ldap import bp
 from app.models import AuditLog
 from app.extensions import db
 from app.utils.ldap_manager import LDAPManager
@@ -17,14 +17,14 @@ import os
 @login_required
 def index():
     """LDAP management dashboard."""
-    return render_template('ldap/index.html', title='LDAP Management')
+    return render_template('modules/ldap/index.html', title='LDAP Management')
 
 
 @bp.route('/browser')
 @login_required
 def browser():
     """LDAP directory browser."""
-    return render_template('ldap/browser.html', title='LDAP Browser')
+    return render_template('modules/ldap/browser.html', title='LDAP Browser')
 
 
 @bp.route('/search', methods=['POST'])
