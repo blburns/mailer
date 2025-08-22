@@ -25,10 +25,24 @@ def postfix():
     return render_template('modules/mail/postfix.html', title='Postfix Management')
 
 
+@bp.route('/postfix/management')
+@login_required
+def postfix_management():
+    """Postfix management page."""
+    return render_template('modules/mail/postfix.html', title='Postfix Management')
+
+
 @bp.route('/dovecot')
 @login_required
 def dovecot():
     """Dovecot management."""
+    return render_template('modules/mail/dovecot.html', title='Dovecot Management')
+
+
+@bp.route('/dovecot/management')
+@login_required
+def dovecot_management():
+    """Dovecot management page."""
     return render_template('modules/mail/dovecot.html', title='Dovecot Management')
 
 
@@ -161,6 +175,13 @@ def postfix_queue():
         })
 
 
+@bp.route('/queue')
+@login_required
+def queue_management():
+    """Mail queue management page."""
+    return render_template('modules/mail/queue.html', title='Mail Queue Management')
+
+
 @bp.route('/postfix/flush-queue', methods=['POST'])
 @login_required
 def postfix_flush_queue():
@@ -283,6 +304,25 @@ def postfix_remove_domain():
                 'success': False,
                 'message': f'Failed to remove domain {domain} from Postfix'
             })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
+
+@bp.route('/postfix/domains')
+@login_required
+def postfix_get_domains():
+    """Get list of Postfix virtual domains."""
+    try:
+        postfix_manager = PostfixManager()
+        domains = postfix_manager.get_virtual_domains()
+        
+        return jsonify({
+            'success': True,
+            'domains': domains
+        })
     except Exception as e:
         return jsonify({
             'success': False,

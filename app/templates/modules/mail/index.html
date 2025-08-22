@@ -2,43 +2,451 @@
 {% block title %}Mail Server{% endblock %}
 {% block content %}
   <div class="max-w-screen-xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-6">
-      Mail Server Management
-    </h1>
-    <p class="text-gray-600 dark:text-gray-400 mb-8">
-      Manage Postfix and Dovecot services
-    </p>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Postfix MTA</h3>
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">
+          Mail Server Management
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">
+          Manage Postfix MTA and Dovecot IMAP/POP3 services
+        </p>
+      </div>
+      <div class="flex space-x-3">
+        <button onclick="refreshAllStatus()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh Status
+        </button>
+      </div>
+    </div>
+
+    <!-- Service Status Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Postfix MTA Status -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Postfix MTA</h3>
+          <span id="postfix-status-badge" class="px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+            Loading...
+          </span>
+        </div>
         <p class="text-gray-600 dark:text-gray-400 mb-4">Mail Transfer Agent</p>
-        <div class="space-y-2">
-          <div class="flex justify-between">
-            <span>Status:</span>
-            <span class="text-green-600 dark:text-green-400">Running</span>
+        
+        <div class="space-y-3 mb-4">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Service Status:</span>
+            <span id="postfix-service-status" class="text-sm font-medium">-</span>
           </div>
-          <div class="flex justify-between">
-            <span>Queue Size:</span>
-            <span>0</span>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Queue Size:</span>
+            <span id="postfix-queue-size" class="text-sm font-medium">-</span>
           </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Last Updated:</span>
+            <span id="postfix-last-updated" class="text-sm text-gray-500">-</span>
+          </div>
+        </div>
+        
+        <div class="flex space-x-2">
+          <button onclick="restartPostfix()" class="flex-1 px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Restart
+          </button>
+          <button onclick="reloadPostfix()" class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Reload
+          </button>
+          <button onclick="checkPostfixConfig()" class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Check Config
+          </button>
         </div>
       </div>
       
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Dovecot IMAP</h3>
+      <!-- Dovecot IMAP Status -->
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Dovecot IMAP</h3>
+          <span id="dovecot-status-badge" class="px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+            Loading...
+          </span>
+        </div>
         <p class="text-gray-600 dark:text-gray-400 mb-4">IMAP/POP3 Server</p>
-        <div class="space-y-2">
-          <div class="flex justify-between">
-            <span>Status:</span>
-            <span class="text-green-600 dark:text-green-400">Running</span>
+        
+        <div class="space-y-3 mb-4">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Service Status:</span>
+            <span id="dovecot-service-status" class="text-sm font-medium">-</span>
           </div>
-          <div class="flex justify-between">
-            <span>Connections:</span>
-            <span>0</span>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Active Connections:</span>
+            <span id="dovecot-connections" class="text-sm font-medium">-</span>
           </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 dark:text-gray-400">Last Updated:</span>
+            <span id="dovecot-last-updated" class="text-sm text-gray-500">-</span>
+          </div>
+        </div>
+        
+        <div class="flex space-x-2">
+          <button onclick="restartDovecot()" class="flex-1 px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Restart
+          </button>
+          <button onclick="reloadDovecot()" class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Reload
+          </button>
+          <button onclick="checkDovecotConfig()" class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Check Config
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mail Queue Management -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Mail Queue Management</h3>
+        <button onclick="refreshQueueInfo()" class="inline-flex items-center px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="queue-count">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Messages in Queue</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="queue-size">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Queue Size (KB)</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="queue-age">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Oldest Message (hrs)</div>
+        </div>
+      </div>
+      
+      <div class="flex space-x-3">
+        <button onclick="flushQueue()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          Flush Queue
+        </button>
+        <button onclick="showQueueDetails()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          View Details
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Domain Management</h4>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Add or remove domains from Postfix</p>
+        <button onclick="showDomainManager()" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200">
+          Manage Domains
+        </button>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Configuration</h4>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">View and edit service configurations</p>
+        <button onclick="showConfigManager()" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200">
+          View Config
+        </button>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Logs & Monitoring</h4>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Access service logs and monitoring</p>
+        <button onclick="showLogs()" class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200">
+          View Logs
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Queue Details Modal -->
+  <div id="queueModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Mail Queue Details</h3>
+          <button onclick="closeQueueModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[60vh]">
+          <pre id="queue-details" class="text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg overflow-x-auto"></pre>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    // Initialize status on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      refreshAllStatus();
+    });
+
+    // Refresh all service statuses
+    function refreshAllStatus() {
+      refreshPostfixStatus();
+      refreshDovecotStatus();
+      refreshQueueInfo();
+    }
+
+    // Postfix status management
+    function refreshPostfixStatus() {
+      fetch('/mail/postfix/status')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            updatePostfixStatus(data.status);
+          } else {
+            updatePostfixStatus({ status: 'error', message: data.message });
+          }
+        })
+        .catch(error => {
+          updatePostfixStatus({ status: 'error', message: error.message });
+        });
+    }
+
+    function updatePostfixStatus(status) {
+      const badge = document.getElementById('postfix-status-badge');
+      const serviceStatus = document.getElementById('postfix-service-status');
+      const queueSize = document.getElementById('postfix-queue-size');
+      const lastUpdated = document.getElementById('postfix-last-updated');
+      
+      if (status.status === 'running') {
+        badge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        badge.textContent = 'Running';
+        serviceStatus.textContent = 'Active';
+        queueSize.textContent = status.queue_count || 0;
+      } else if (status.status === 'stopped') {
+        badge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        badge.textContent = 'Stopped';
+        serviceStatus.textContent = 'Inactive';
+        queueSize.textContent = '-';
+      } else {
+        badge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+        badge.textContent = 'Error';
+        serviceStatus.textContent = 'Error';
+        queueSize.textContent = '-';
+      }
+      
+      lastUpdated.textContent = new Date().toLocaleTimeString();
+    }
+
+    // Dovecot status management
+    function refreshDovecotStatus() {
+      fetch('/mail/dovecot/status')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            updateDovecotStatus(data.status);
+          } else {
+            updateDovecotStatus({ status: 'error', message: data.message });
+          }
+        })
+        .catch(error => {
+          updateDovecotStatus({ status: 'error', message: error.message });
+        });
+    }
+
+    function updateDovecotStatus(status) {
+      const badge = document.getElementById('dovecot-status-badge');
+      const serviceStatus = document.getElementById('dovecot-service-status');
+      const connections = document.getElementById('dovecot-connections');
+      const lastUpdated = document.getElementById('dovecot-last-updated');
+      
+      if (status.status === 'running') {
+        badge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        badge.textContent = 'Running';
+        serviceStatus.textContent = 'Active';
+        connections.textContent = '0'; // TODO: Get actual connection count
+      } else if (status.status === 'stopped') {
+        badge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        badge.textContent = 'Stopped';
+        serviceStatus.textContent = 'Inactive';
+        connections.textContent = '-';
+      } else {
+        badge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+        badge.textContent = 'Error';
+        serviceStatus.textContent = 'Error';
+        connections.textContent = '-';
+      }
+      
+      lastUpdated.textContent = new Date().toLocaleTimeString();
+    }
+
+    // Queue management
+    function refreshQueueInfo() {
+      fetch('/mail/postfix/queue')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            updateQueueInfo(data.queue);
+          } else {
+            updateQueueInfo({ count: 0, details: 'Error loading queue info' });
+          }
+        })
+        .catch(error => {
+          updateQueueInfo({ count: 0, details: 'Error: ' + error.message });
+        });
+    }
+
+    function updateQueueInfo(queue) {
+      document.getElementById('queue-count').textContent = queue.count || 0;
+      document.getElementById('queue-size').textContent = '-'; // TODO: Calculate actual size
+      document.getElementById('queue-age').textContent = '-'; // TODO: Calculate actual age
+    }
+
+    // Service control functions
+    function restartPostfix() {
+      if (confirm('Are you sure you want to restart Postfix? This will temporarily stop mail processing.')) {
+        fetch('/mail/postfix/restart', { method: 'POST' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Postfix restarted successfully');
+              setTimeout(refreshPostfixStatus, 2000);
+            } else {
+              alert('Failed to restart Postfix: ' + data.message);
+            }
+          })
+          .catch(error => alert('Error: ' + error.message));
+      }
+    }
+
+    function reloadPostfix() {
+      if (confirm('Reload Postfix configuration? This will apply configuration changes without stopping the service.')) {
+        fetch('/mail/postfix/reload', { method: 'POST' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Postfix configuration reloaded successfully');
+              setTimeout(refreshPostfixStatus, 1000);
+            } else {
+              alert('Failed to reload Postfix: ' + data.message);
+            }
+          })
+          .catch(error => alert('Error: ' + error.message));
+      }
+    }
+
+    function checkPostfixConfig() {
+      fetch('/mail/postfix/check-config', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            if (data.result.valid) {
+              alert('Postfix configuration is valid!');
+            } else {
+              alert('Postfix configuration has errors:\n' + data.result.message);
+            }
+          } else {
+            alert('Failed to check configuration: ' + data.message);
+          }
+        })
+        .catch(error => alert('Error: ' + error.message));
+    }
+
+    function restartDovecot() {
+      if (confirm('Are you sure you want to restart Dovecot? This will disconnect all IMAP/POP3 users.')) {
+        fetch('/mail/dovecot/restart', { method: 'POST' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Dovecot restarted successfully');
+              setTimeout(refreshDovecotStatus, 2000);
+            } else {
+              alert('Failed to restart Dovecot: ' + data.message);
+            }
+          })
+          .catch(error => alert('Error: ' + error.message));
+      }
+    }
+
+    function reloadDovecot() {
+      if (confirm('Reload Dovecot configuration? This will apply configuration changes without disconnecting users.')) {
+        fetch('/mail/dovecot/reload', { method: 'POST' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Dovecot configuration reloaded successfully');
+              setTimeout(refreshDovecotStatus, 1000);
+            } else {
+              alert('Failed to reload Dovecot: ' + data.message);
+            }
+          })
+          .catch(error => alert('Error: ' + error.message));
+      }
+    }
+
+    function checkDovecotConfig() {
+      fetch('/mail/dovecot/check-config', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            if (data.result.valid) {
+              alert('Dovecot configuration is valid!');
+            } else {
+              alert('Dovecot configuration has errors:\n' + data.result.message);
+            }
+          } else {
+            alert('Failed to check configuration: ' + data.message);
+          }
+        })
+        .catch(error => alert('Error: ' + error.message));
+      }
+
+    function flushQueue() {
+      if (confirm('Are you sure you want to flush the mail queue? This will attempt to deliver all queued messages.')) {
+        fetch('/mail/postfix/flush-queue', { method: 'POST' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Mail queue flushed successfully');
+              setTimeout(refreshQueueInfo, 2000);
+            } else {
+              alert('Failed to flush queue: ' + data.message);
+            }
+          })
+          .catch(error => alert('Error: ' + error.message));
+      }
+    }
+
+    function showQueueDetails() {
+      fetch('/mail/postfix/queue')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('queue-details').textContent = data.queue.details || 'No queue details available';
+            document.getElementById('queueModal').classList.remove('hidden');
+          } else {
+            alert('Failed to load queue details: ' + data.message);
+          }
+        })
+        .catch(error => alert('Error: ' + error.message));
+    }
+
+    function closeQueueModal() {
+      document.getElementById('queueModal').classList.add('hidden');
+    }
+
+    // Placeholder functions for future implementation
+    function showDomainManager() {
+      alert('Domain management will be implemented in the next update');
+    }
+
+    function showConfigManager() {
+      alert('Configuration management will be implemented in the next update');
+    }
+
+    function showLogs() {
+      alert('Log viewing will be implemented in the next update');
+    }
+  </script>
 {% endblock %}

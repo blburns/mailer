@@ -6,6 +6,7 @@ import os
 import subprocess
 import shutil
 import re
+import time
 from typing import Dict, List, Optional
 import logging
 
@@ -65,14 +66,30 @@ class PostfixManager:
             status = result.stdout.strip()
             
             if status == 'active':
-                return {
-                    'status': 'running',
-                    'service': 'active'
-                }
+                # Try to get connection count
+                try:
+                    # Use netstat to count connections on IMAP/POP3 ports
+                    imap_result = subprocess.run(['netstat', '-an'], 
+                                               capture_output=True, text=True, timeout=10)
+                    imap_connections = len([line for line in imap_result.stdout.split('\n') 
+                                          if ':143 ' in line or ':993 ' in line or ':110 ' in line or ':995 ' in line])
+                    
+                    return {
+                        'status': 'running',
+                        'service': 'active',
+                        'connections': imap_connections
+                    }
+                except:
+                    return {
+                        'status': 'running',
+                        'service': 'active',
+                        'connections': 0
+                    }
             else:
                 return {
                     'status': 'stopped',
-                    'service': status
+                    'service': status,
+                    'connections': 0
                 }
         except Exception as e:
             logger.error(f"Error getting Dovecot status: {e}")
@@ -125,9 +142,34 @@ class PostfixManager:
                 queue_count = len([line for line in lines 
                                  if line.startswith('Mail queue is empty') == False and line.strip()])
                 
+                # Calculate queue size and age
+                queue_size = 0
+                oldest_age = 0
+                newest_age = 0
+                
+                try:
+                    # Get queue directory size
+                    queue_dir = "/var/spool/postfix/incoming"
+                    if os.path.exists(queue_dir):
+                        for root, dirs, files in os.walk(queue_dir):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                if os.path.isfile(file_path):
+                                    queue_size += os.path.getsize(file_path)
+                                    file_age = time.time() - os.path.getmtime(file_path)
+                                    if file_age > oldest_age:
+                                        oldest_age = file_age
+                                    if newest_age == 0 or file_age < newest_age:
+                                        newest_age = file_age
+                except:
+                    pass
+                
                 return {
                     'count': max(0, queue_count - 1),
-                    'details': result.stdout
+                    'details': result.stdout,
+                    'size_kb': queue_size // 1024,
+                    'oldest_hours': int(oldest_age // 3600),
+                    'newest_hours': int(newest_age // 3600)
                 }
             else:
                 return {'count': 0, 'details': result.stderr}
@@ -201,6 +243,21 @@ class PostfixManager:
         except Exception as e:
             logger.error(f"Error removing domain {domain}: {e}")
             return False
+
+    def get_virtual_domains(self) -> List[str]:
+        """Get list of virtual domains from Postfix."""
+        try:
+            virtual_domains_file = os.path.join(self.config_dir, "virtual_domains")
+            
+            if os.path.exists(virtual_domains_file):
+                with open(virtual_domains_file, 'r') as f:
+                    domains = f.read().splitlines()
+                return [domain.strip() for domain in domains if domain.strip()]
+            else:
+                return []
+        except Exception as e:
+            logger.error(f"Error getting virtual domains: {e}")
+            return []
     
     def _update_main_cf_virtual_domains(self):
         """Update main.cf to include virtual_domains file."""

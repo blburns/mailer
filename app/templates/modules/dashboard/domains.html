@@ -1,5 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}Mail Domains{% endblock %}
+{% block head %}
+<script>
+  // Modal functions - define these early so they're available
+  function openModal(modalId) {
+    document.getElementById(modalId + '-backdrop').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function closeModal(modalId) {
+    document.getElementById(modalId + '-backdrop').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+  }
+</script>
+{% endblock %}
 {% block content %}
   <div class="max-w-screen-xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
@@ -208,16 +222,6 @@
   </div>
 
   <script>
-    function openModal(modalId) {
-      document.getElementById(modalId + '-backdrop').classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
-    
-    function closeModal(modalId) {
-      document.getElementById(modalId + '-backdrop').classList.add('hidden');
-      document.body.style.overflow = 'auto';
-    }
-    
     // Generate LDAP Base DN from domain
     function generateLdapBaseDN() {
       const domain = document.getElementById('domain').value.trim();
