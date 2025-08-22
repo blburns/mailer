@@ -160,7 +160,7 @@
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
         <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Domain Management</h4>
         <p class="text-gray-600 dark:text-gray-400 mb-4">Add or remove domains from Postfix</p>
-        <button onclick="showDomainManager()" class="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200">
+        <button onclick="showDomainManager()" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200">
           Manage Domains
         </button>
       </div>
@@ -168,17 +168,92 @@
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
         <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Configuration</h4>
         <p class="text-gray-600 dark:text-gray-400 mb-4">View and edit service configurations</p>
-        <button onclick="showConfigManager()" class="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200">
+        <button onclick="showConfigManager()" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200">
           View Config
         </button>
       </div>
       
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
         <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Logs & Monitoring</h4>
-        <p class="text-gray-400 mb-4">Access service logs and monitoring</p>
-        <button onclick="showLogs()" class="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200">
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Access service logs and monitoring</p>
+        <button onclick="showLogs()" class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200">
           View Logs
         </button>
+      </div>
+    </div>
+
+    <!-- Service Monitoring Dashboard -->
+    <div class="mt-8 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Service Monitoring</h3>
+        <div class="flex space-x-3">
+          <button onclick="startMonitoring()" id="startMonitorBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Start Monitoring
+          </button>
+          <button onclick="stopMonitoring()" id="stopMonitorBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 hidden">
+            Stop Monitoring
+          </button>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="totalEmails">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Total Emails Today</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="deliveredEmails">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Delivered</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="failedEmails">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Failed</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="avgDeliveryTime">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Avg Delivery (ms)</div>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Recent Activity</h4>
+          <div id="recentActivity" class="space-y-2 max-h-48 overflow-y-auto">
+            <div class="text-center text-gray-500 dark:text-gray-400 py-4">No recent activity</div>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Performance Metrics</h4>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600 dark:text-gray-400">CPU Usage:</span>
+              <div class="flex items-center space-x-2">
+                <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div id="cpuBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <span id="cpuPercent" class="text-sm font-medium text-gray-900 dark:text-white">0%</span>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600 dark:text-gray-400">Memory Usage:</span>
+              <div class="flex items-center space-x-2">
+                <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div id="memoryBar" class="bg-green-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <span id="memoryPercent" class="text-sm font-medium text-gray-900 dark:text-white">0%</span>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600 dark:text-gray-400">Disk Usage:</span>
+              <div class="flex items-center space-x-2">
+                <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div id="diskBar" class="bg-yellow-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <span id="diskPercent" class="text-sm font-medium text-gray-900 dark:text-white">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -324,33 +399,47 @@
     // Service control functions
     function restartPostfix() {
       if (confirm('Are you sure you want to restart Postfix? This will temporarily stop mail processing.')) {
+        addActivityEntry('Postfix restart initiated', 'warning');
+        
         fetch('/mail/postfix/restart', { method: 'POST' })
           .then(response => response.json())
           .then(data => {
             if (data.success) {
               alert('Postfix restarted successfully');
+              addActivityEntry('Postfix restarted successfully', 'success');
               setTimeout(refreshPostfixStatus, 2000);
             } else {
               alert('Failed to restart Postfix: ' + data.message);
+              addActivityEntry('Postfix restart failed: ' + data.message, 'error');
             }
           })
-          .catch(error => alert('Error: ' + error.message));
+          .catch(error => {
+            alert('Error: ' + error.message);
+            addActivityEntry('Postfix restart error: ' + error.message, 'error');
+          });
       }
     }
 
     function reloadPostfix() {
       if (confirm('Reload Postfix configuration? This will apply configuration changes without stopping the service.')) {
+        addActivityEntry('Postfix configuration reload initiated', 'info');
+        
         fetch('/mail/postfix/reload', { method: 'POST' })
           .then(response => response.json())
           .then(data => {
             if (data.success) {
               alert('Postfix configuration reloaded successfully');
+              addActivityEntry('Postfix configuration reloaded successfully', 'success');
               setTimeout(refreshPostfixStatus, 1000);
             } else {
               alert('Failed to reload Postfix: ' + data.message);
+              addActivityEntry('Postfix configuration reload failed: ' + data.message, 'error');
             }
           })
-          .catch(error => alert('Error: ' + error.message));
+          .catch(error => {
+            alert('Error: ' + error.message);
+            addActivityEntry('Postfix configuration reload error: ' + error.message, 'error');
+          });
       }
     }
 
@@ -441,8 +530,12 @@
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            document.getElementById('queue-details').textContent = data.queue.details || 'No queue details available';
+            const queueDetails = data.queue.details || 'No queue details available';
+            document.getElementById('queue-details').textContent = queueDetails;
             document.getElementById('queueModal').classList.remove('hidden');
+            
+            // Add activity entry
+            addActivityEntry('Queue details viewed', 'info');
           } else {
             alert('Failed to load queue details: ' + data.message);
           }
@@ -454,17 +547,395 @@
       document.getElementById('queueModal').classList.add('hidden');
     }
 
-    // Placeholder functions for future implementation
+    // Domain management
     function showDomainManager() {
-      alert('Domain management will be implemented in the next update');
+      // Create and show domain management modal
+      const modal = document.createElement('div');
+      modal.id = 'domainModal';
+      modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 z-50';
+      modal.innerHTML = `
+        <div class="flex items-center justify-center min-h-screen p-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Domain Management</h3>
+              <button onclick="closeDomainModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <div class="mb-6">
+                <div class="flex space-x-3 mb-4">
+                  <input type="text" id="newDomain" placeholder="Enter domain name (e.g., example.com)" 
+                         class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                  <button onclick="addDomain()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    Add Domain
+                  </button>
+                </div>
+              </div>
+              <div id="domainsList" class="space-y-2">
+                <div class="text-center text-gray-500 dark:text-gray-400 py-4">Loading domains...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      loadDomainsList();
     }
 
+    function closeDomainModal() {
+      const modal = document.getElementById('domainModal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+
+    function loadDomainsList() {
+      fetch('/mail/postfix/domains')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            displayDomains(data.domains);
+          } else {
+            displayDomains([]);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading domains:', error);
+          displayDomains([]);
+        });
+    }
+
+    function displayDomains(domains) {
+      const domainsList = document.getElementById('domainsList');
+      if (domains.length === 0) {
+        domainsList.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 py-4">No domains configured</div>';
+        return;
+      }
+
+      domainsList.innerHTML = domains.map(domain => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <span class="text-gray-900 dark:text-white font-medium">${domain}</span>
+          <button onclick="removeDomain('${domain}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors duration-200">
+            Remove
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function addDomain() {
+      const domainInput = document.getElementById('newDomain');
+      const domain = domainInput.value.trim();
+      
+      if (!domain) {
+        alert('Please enter a domain name');
+        return;
+      }
+
+      fetch('/mail/postfix/add-domain', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ domain: domain })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Domain added successfully');
+          domainInput.value = '';
+          loadDomainsList();
+        } else {
+          alert('Failed to add domain: ' + data.message);
+        }
+      })
+      .catch(error => alert('Error: ' + error.message));
+    }
+
+    function removeDomain(domain) {
+      if (confirm(`Are you sure you want to remove the domain "${domain}"?`)) {
+        fetch('/mail/postfix/remove-domain', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ domain: domain })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('Domain removed successfully');
+            loadDomainsList();
+          } else {
+            alert('Failed to remove domain: ' + data.message);
+          }
+        })
+        .catch(error => alert('Error: ' + error.message));
+      }
+    }
+
+    // Configuration management
     function showConfigManager() {
-      alert('Configuration management will be implemented in the next update');
+      const modal = document.createElement('div');
+      modal.id = 'configModal';
+      modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 z-50';
+      modal.innerHTML = `
+        <div class="flex items-center justify-center min-h-screen p-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Configuration Files</h3>
+              <button onclick="closeConfigModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-3">
+                  <h4 class="text-lg font-medium text-gray-900 dark:text-white">Postfix Configuration</h4>
+                  <button onclick="viewConfigFile('main.cf')" class="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200">
+                    <div class="font-medium">main.cf</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Main Postfix configuration</div>
+                  </button>
+                  <button onclick="viewConfigFile('master.cf')" class="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200">
+                    <div class="font-medium">master.cf</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Master daemon configuration</div>
+                  </button>
+                  <button onclick="viewConfigFile('virtual_domains')" class="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200">
+                    <div class="font-medium">virtual_domains</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Virtual domain list</div>
+                  </button>
+                </div>
+                <div class="space-y-3">
+                  <h4 class="text-lg font-medium text-gray-900 dark:text-white">Dovecot Configuration</h4>
+                  <button onclick="viewConfigFile('dovecot.conf')" class="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200">
+                    <div class="font-medium">dovecot.conf</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Main Dovecot configuration</div>
+                  </button>
+                  <button onclick="viewConfigFile('10-auth.conf')" class="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200">
+                    <div class="font-medium">10-auth.conf</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Authentication configuration</div>
+                  </button>
+                  <button onclick="viewConfigFile('10-mail.conf')" class="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200">
+                    <div class="font-medium">10-mail.conf</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Mail configuration</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
     }
 
+    function closeConfigModal() {
+      const modal = document.getElementById('configModal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+
+    function viewConfigFile(filename) {
+      // TODO: Implement actual config file viewing
+      alert(`Configuration file viewing for ${filename} will be implemented in the next update`);
+    }
+
+    // Log viewing
     function showLogs() {
-      alert('Log viewing will be implemented in the next update');
+      const modal = document.createElement('div');
+      modal.id = 'logsModal';
+      modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 z-50';
+      modal.innerHTML = `
+        <div class="flex items-center justify-center min-h-screen p-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[80vh] overflow-hidden">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Service Logs</h3>
+              <button onclick="closeLogsModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <div class="flex space-x-3 mb-4">
+                <select id="logService" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                  <option value="postfix">Postfix</option>
+                  <option value="dovecot">Dovecot</option>
+                  <option value="system">System</option>
+                </select>
+                <select id="logLevel" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                  <option value="all">All Levels</option>
+                  <option value="error">Error Only</option>
+                  <option value="warning">Warning & Error</option>
+                  <option value="info">Info, Warning & Error</option>
+                </select>
+                <button onclick="refreshLogs()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200">
+                  Refresh Logs
+                </button>
+                <button onclick="clearLogs()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200">
+                  Clear Logs
+                </button>
+              </div>
+              <div id="logsContent" class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-auto max-h-96">
+                <div class="text-center text-gray-500 py-4">Select a service and click "Refresh Logs" to view logs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function closeLogsModal() {
+      const modal = document.getElementById('logsModal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+
+    function refreshLogs() {
+      const service = document.getElementById('logService').value;
+      const level = document.getElementById('logLevel').value;
+      const logsContent = document.getElementById('logsContent');
+      
+      logsContent.innerHTML = '<div class="text-center text-gray-500 py-4">Loading logs...</div>';
+      
+      // TODO: Implement actual log fetching
+      setTimeout(() => {
+        logsContent.innerHTML = `
+          <div class="text-gray-400">[2024-01-15 10:30:15] INFO: ${service} service started successfully</div>
+          <div class="text-gray-400">[2024-01-15 10:30:16] INFO: ${service} configuration loaded</div>
+          <div class="text-gray-400">[2024-01-15 10:30:17] INFO: ${service} listening on port 25</div>
+          <div class="text-green-400">[2024-01-15 10:30:18] SUCCESS: ${service} ready to accept connections</div>
+        `;
+      }, 1000);
+    }
+
+    function clearLogs() {
+      if (confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
+        document.getElementById('logsContent').innerHTML = '<div class="text-center text-gray-500 py-4">Logs cleared</div>';
+      }
+    }
+
+    // Service monitoring functionality
+    let monitoringInterval = null;
+    let monitoringActive = false;
+
+    function startMonitoring() {
+      if (monitoringActive) return;
+      
+      monitoringActive = true;
+      document.getElementById('startMonitorBtn').classList.add('hidden');
+      document.getElementById('stopMonitorBtn').classList.remove('hidden');
+      
+      // Start real-time monitoring
+      updateMonitoringStats();
+      monitoringInterval = setInterval(updateMonitoringStats, 5000); // Update every 5 seconds
+      
+      // Add activity entry
+      addActivityEntry('Monitoring started', 'info');
+    }
+
+    function stopMonitoring() {
+      if (!monitoringActive) return;
+      
+      monitoringActive = false;
+      document.getElementById('startMonitorBtn').classList.remove('hidden');
+      document.getElementById('stopMonitorBtn').classList.add('hidden');
+      
+      // Stop monitoring
+      if (monitoringInterval) {
+        clearInterval(monitoringInterval);
+        monitoringInterval = null;
+      }
+      
+      // Add activity entry
+      addActivityEntry('Monitoring stopped', 'info');
+    }
+
+    function updateMonitoringStats() {
+      // Update email statistics (mock data for now)
+      updateEmailStats();
+      
+      // Update performance metrics
+      updatePerformanceMetrics();
+      
+      // Update recent activity
+      updateRecentActivity();
+    }
+
+    function updateEmailStats() {
+      // Mock data - replace with actual API calls
+      const totalEmails = Math.floor(Math.random() * 1000) + 100;
+      const deliveredEmails = Math.floor(totalEmails * 0.95);
+      const failedEmails = totalEmails - deliveredEmails;
+      const avgDeliveryTime = Math.floor(Math.random() * 500) + 100;
+      
+      document.getElementById('totalEmails').textContent = totalEmails.toLocaleString();
+      document.getElementById('deliveredEmails').textContent = deliveredEmails.toLocaleString();
+      document.getElementById('failedEmails').textContent = failedEmails.toLocaleString();
+      document.getElementById('avgDeliveryTime').textContent = avgDeliveryTime;
+    }
+
+    function updatePerformanceMetrics() {
+      // Mock data - replace with actual system monitoring
+      const cpuUsage = Math.floor(Math.random() * 80) + 10;
+      const memoryUsage = Math.floor(Math.random() * 60) + 20;
+      const diskUsage = Math.floor(Math.random() * 40) + 30;
+      
+      document.getElementById('cpuBar').style.width = cpuUsage + '%';
+      document.getElementById('cpuPercent').textContent = cpuUsage + '%';
+      
+      document.getElementById('memoryBar').style.width = memoryUsage + '%';
+      document.getElementById('memoryPercent').textContent = memoryUsage + '%';
+      
+      document.getElementById('diskBar').style.width = diskUsage + '%';
+      document.getElementById('diskPercent').textContent = diskUsage + '%';
+    }
+
+    function updateRecentActivity() {
+      const activities = [
+        { message: 'Email delivered to user@example.com', type: 'success', time: new Date().toLocaleTimeString() },
+        { message: 'Configuration reloaded successfully', type: 'info', time: new Date().toLocaleTimeString() },
+        { message: 'Queue processed 15 messages', type: 'info', time: new Date().toLocaleTimeString() },
+        { message: 'New domain added: test.com', type: 'success', time: new Date().toLocaleTimeString() }
+      ];
+      
+      const recentActivity = document.getElementById('recentActivity');
+      recentActivity.innerHTML = activities.map(activity => `
+        <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full ${activity.type === 'success' ? 'bg-green-500' : activity.type === 'error' ? 'bg-red-500' : 'bg-blue-500'}"></span>
+            <span class="text-sm text-gray-700 dark:text-gray-300">${activity.message}</span>
+          </div>
+          <span class="text-xs text-gray-500 dark:text-gray-400">${activity.time}</span>
+        </div>
+      `).join('');
+    }
+
+    function addActivityEntry(message, type) {
+      const recentActivity = document.getElementById('recentActivity');
+      const activityDiv = document.createElement('div');
+      activityDiv.className = 'flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg';
+      activityDiv.innerHTML = `
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}"></span>
+          <span class="text-sm text-gray-700 dark:text-gray-300">${message}</span>
+        </div>
+        <span class="text-xs text-gray-500 dark:text-gray-400">${new Date().toLocaleTimeString()}</span>
+      `;
+      
+      recentActivity.insertBefore(activityDiv, recentActivity.firstChild);
+      
+      // Keep only last 10 entries
+      const entries = recentActivity.children;
+      if (entries.length > 10) {
+        recentActivity.removeChild(entries[entries.length - 1]);
+      }
     }
   </script>
 {% endblock %}
