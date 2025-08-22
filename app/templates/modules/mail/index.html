@@ -293,7 +293,12 @@
     // Postfix status management
     function refreshPostfixStatus() {
       fetch('/mail/postfix/status')
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
             updatePostfixStatus(data.status);
@@ -302,6 +307,7 @@
           }
         })
         .catch(error => {
+          console.error('Postfix status error:', error);
           updatePostfixStatus({ status: 'error', message: error.message });
         });
     }
@@ -335,7 +341,12 @@
     // Dovecot status management
     function refreshDovecotStatus() {
       fetch('/mail/dovecot/status')
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
             updateDovecotStatus(data.status);
@@ -344,6 +355,7 @@
           }
         })
         .catch(error => {
+          console.error('Dovecot status error:', error);
           updateDovecotStatus({ status: 'error', message: error.message });
         });
     }
@@ -377,7 +389,12 @@
     // Queue management
     function refreshQueueInfo() {
       fetch('/mail/postfix/queue')
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
             updateQueueInfo(data.queue);
@@ -386,6 +403,7 @@
           }
         })
         .catch(error => {
+          console.error('Queue info error:', error);
           updateQueueInfo({ count: 0, details: 'Error: ' + error.message });
         });
     }
@@ -402,7 +420,12 @@
         addActivityEntry('Postfix restart initiated', 'warning');
         
         fetch('/mail/postfix/restart', { method: 'POST' })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.success) {
               alert('Postfix restarted successfully');
@@ -414,6 +437,7 @@
             }
           })
           .catch(error => {
+            console.error('Postfix restart error:', error);
             alert('Error: ' + error.message);
             addActivityEntry('Postfix restart error: ' + error.message, 'error');
           });
@@ -425,7 +449,12 @@
         addActivityEntry('Postfix configuration reload initiated', 'info');
         
         fetch('/mail/postfix/reload', { method: 'POST' })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.success) {
               alert('Postfix configuration reloaded successfully');
@@ -437,6 +466,7 @@
             }
           })
           .catch(error => {
+            console.error('Postfix reload error:', error);
             alert('Error: ' + error.message);
             addActivityEntry('Postfix configuration reload error: ' + error.message, 'error');
           });
@@ -445,7 +475,12 @@
 
     function checkPostfixConfig() {
       fetch('/mail/postfix/check-config', { method: 'POST' })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
             if (data.result.valid) {
@@ -457,13 +492,21 @@
             alert('Failed to check configuration: ' + data.message);
           }
         })
-        .catch(error => alert('Error: ' + error.message));
+        .catch(error => {
+          console.error('Postfix config check error:', error);
+          alert('Error: ' + error.message);
+        });
     }
 
     function restartDovecot() {
       if (confirm('Are you sure you want to restart Dovecot? This will disconnect all IMAP/POP3 users.')) {
         fetch('/mail/dovecot/restart', { method: 'POST' })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.success) {
               alert('Dovecot restarted successfully');
@@ -472,14 +515,22 @@
               alert('Failed to restart Dovecot: ' + data.message);
             }
           })
-          .catch(error => alert('Error: ' + error.message));
+          .catch(error => {
+            console.error('Dovecot restart error:', error);
+            alert('Error: ' + error.message);
+          });
       }
     }
 
     function reloadDovecot() {
       if (confirm('Reload Dovecot configuration? This will apply configuration changes without disconnecting users.')) {
         fetch('/mail/dovecot/reload', { method: 'POST' })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.success) {
               alert('Dovecot configuration reloaded successfully');
@@ -488,13 +539,21 @@
               alert('Failed to reload Dovecot: ' + data.message);
             }
           })
-          .catch(error => alert('Error: ' + error.message));
+          .catch(error => {
+            console.error('Dovecot reload error:', error);
+            alert('Error: ' + error.message);
+          });
       }
     }
 
     function checkDovecotConfig() {
       fetch('/mail/dovecot/check-config', { method: 'POST' })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
             if (data.result.valid) {
@@ -506,13 +565,21 @@
             alert('Failed to check configuration: ' + data.message);
           }
         })
-        .catch(error => alert('Error: ' + error.message));
+        .catch(error => {
+          console.error('Dovecot config check error:', error);
+          alert('Error: ' + error.message);
+        });
       }
 
     function flushQueue() {
       if (confirm('Are you sure you want to flush the mail queue? This will attempt to deliver all queued messages.')) {
         fetch('/mail/postfix/flush-queue', { method: 'POST' })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.success) {
               alert('Mail queue flushed successfully');
@@ -521,13 +588,21 @@
               alert('Failed to flush queue: ' + data.message);
             }
           })
-          .catch(error => alert('Error: ' + error.message));
+          .catch(error => {
+            console.error('Queue flush error:', error);
+            alert('Error: ' + error.message);
+          });
       }
     }
 
     function showQueueDetails() {
       fetch('/mail/postfix/queue')
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
             const queueDetails = data.queue.details || 'No queue details available';
@@ -540,7 +615,10 @@
             alert('Failed to load queue details: ' + data.message);
           }
         })
-        .catch(error => alert('Error: ' + error.message));
+        .catch(error => {
+          console.error('Queue details error:', error);
+          alert('Error: ' + error.message);
+        });
     }
 
     function closeQueueModal() {
@@ -594,7 +672,12 @@
 
     function loadDomainsList() {
       fetch('/mail/postfix/domains')
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
             displayDomains(data.domains);
@@ -641,7 +724,12 @@
         },
         body: JSON.stringify({ domain: domain })
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then(data => {
         if (data.success) {
           alert('Domain added successfully');
@@ -651,7 +739,10 @@
           alert('Failed to add domain: ' + data.message);
         }
       })
-      .catch(error => alert('Error: ' + error.message));
+      .catch(error => {
+        console.error('Add domain error:', error);
+        alert('Error: ' + error.message);
+      });
     }
 
     function removeDomain(domain) {
@@ -663,7 +754,12 @@
           },
           body: JSON.stringify({ domain: domain })
         })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
             alert('Domain removed successfully');
@@ -672,7 +768,10 @@
             alert('Failed to remove domain: ' + data.message);
           }
         })
-        .catch(error => alert('Error: ' + error.message));
+        .catch(error => {
+          console.error('Remove domain error:', error);
+          alert('Error: ' + error.message);
+        });
       }
     }
 
