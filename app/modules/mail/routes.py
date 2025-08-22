@@ -2,13 +2,18 @@
 Mail Management Routes
 """
 
-from flask import render_template, request, jsonify, flash
+from flask import render_template, request, jsonify, flash, current_app
 from flask_login import login_required, current_user
 from app.modules.mail import bp
 from app.models import AuditLog
 from app.extensions import db
 from app.utils.mail_manager import PostfixManager, DovecotManager
 import json
+import logging
+import time
+import os
+
+logger = logging.getLogger(__name__)
 
 
 @bp.route('/')
@@ -57,10 +62,11 @@ def postfix_status():
             'status': status
         })
     except Exception as e:
+        logger.error(f"Error getting Postfix status: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/postfix/restart', methods=['POST'])
@@ -68,36 +74,45 @@ def postfix_status():
 def postfix_restart():
     """Restart Postfix service."""
     try:
+        logger.info(f"Postfix restart requested by user {current_user.id}")
+        
         postfix_manager = PostfixManager()
         success = postfix_manager.restart_service()
         
         if success:
             # Log the action
-            audit_log = AuditLog(
-                user_id=current_user.id,
-                action='restart_postfix',
-                resource_type='postfix_service',
-                resource_id='service',
-                details='Restarted Postfix service',
-                ip_address=request.remote_addr
-            )
-            db.session.add(audit_log)
-            db.session.commit()
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='restart_postfix',
+                    resource_type='postfix_service',
+                    resource_id='service',
+                    details='Restarted Postfix service',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+                logger.info(f"Audit log created for Postfix restart by user {current_user.id}")
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+                # Don't fail the operation if audit logging fails
             
             return jsonify({
                 'success': True,
                 'message': 'Postfix service restarted successfully'
             })
         else:
+            logger.warning(f"Postfix restart failed for user {current_user.id}")
             return jsonify({
                 'success': False,
                 'message': 'Failed to restart Postfix service'
-            })
+            }), 500
     except Exception as e:
+        logger.error(f"Error in postfix_restart: {e}")
         return jsonify({
             'success': False,
-            'message': str(e)
-        })
+            'message': f'Error restarting Postfix: {str(e)}'
+        }), 500
 
 
 @bp.route('/postfix/reload', methods=['POST'])
@@ -105,36 +120,45 @@ def postfix_restart():
 def postfix_reload():
     """Reload Postfix configuration."""
     try:
+        logger.info(f"Postfix reload requested by user {current_user.id}")
+        
         postfix_manager = PostfixManager()
         success = postfix_manager.reload_config()
         
         if success:
             # Log the action
-            audit_log = AuditLog(
-                user_id=current_user.id,
-                action='reload_postfix_config',
-                resource_type='postfix_config',
-                resource_id='config',
-                details='Reloaded Postfix configuration',
-                ip_address=request.remote_addr
-            )
-            db.session.add(audit_log)
-            db.session.commit()
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='reload_postfix_config',
+                    resource_type='postfix_config',
+                    resource_id='config',
+                    details='Reloaded Postfix configuration',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+                logger.info(f"Audit log created for Postfix reload by user {current_user.id}")
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+                # Don't fail the operation if audit logging fails
             
             return jsonify({
                 'success': True,
                 'message': 'Postfix configuration reloaded successfully'
             })
         else:
+            logger.warning(f"Postfix reload failed for user {current_user.id}")
             return jsonify({
                 'success': False,
                 'message': 'Failed to reload Postfix configuration'
-            })
+            }), 500
     except Exception as e:
+        logger.error(f"Error in postfix_reload: {e}")
         return jsonify({
             'success': False,
-            'message': str(e)
-        })
+            'message': f'Error reloading Postfix: {str(e)}'
+        }), 500
 
 
 @bp.route('/postfix/check-config', methods=['POST'])
@@ -142,6 +166,8 @@ def postfix_reload():
 def postfix_check_config():
     """Check Postfix configuration syntax."""
     try:
+        logger.info(f"Postfix config check requested by user {current_user.id}")
+        
         postfix_manager = PostfixManager()
         result = postfix_manager.check_config()
         
@@ -150,10 +176,11 @@ def postfix_check_config():
             'result': result
         })
     except Exception as e:
+        logger.error(f"Error in postfix_check_config: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/postfix/queue')
@@ -169,10 +196,11 @@ def postfix_queue():
             'queue': queue_info
         })
     except Exception as e:
+        logger.error(f"Error in postfix_queue: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/queue')
@@ -187,36 +215,45 @@ def queue_management():
 def postfix_flush_queue():
     """Flush Postfix mail queue."""
     try:
+        logger.info(f"Postfix queue flush requested by user {current_user.id}")
+        
         postfix_manager = PostfixManager()
         success = postfix_manager.flush_queue()
         
         if success:
             # Log the action
-            audit_log = AuditLog(
-                user_id=current_user.id,
-                action='flush_postfix_queue',
-                resource_type='postfix_queue',
-                resource_id='queue',
-                details='Flushed Postfix mail queue',
-                ip_address=request.remote_addr
-            )
-            db.session.add(audit_log)
-            db.session.commit()
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='flush_postfix_queue',
+                    resource_type='postfix_queue',
+                    resource_id='queue',
+                    details='Flushed Postfix mail queue',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+                logger.info(f"Audit log created for queue flush by user {current_user.id}")
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+                # Don't fail the operation if audit logging fails
             
             return jsonify({
                 'success': True,
                 'message': 'Mail queue flushed successfully'
             })
         else:
+            logger.warning(f"Postfix queue flush failed for user {current_user.id}")
             return jsonify({
                 'success': False,
                 'message': 'Failed to flush mail queue'
-            })
+            }), 500
     except Exception as e:
+        logger.error(f"Error in postfix_flush_queue: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/postfix/add-domain', methods=['POST'])
@@ -225,44 +262,59 @@ def postfix_add_domain():
     """Add domain to Postfix virtual domains."""
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No JSON data provided'
+            }), 400
+        
         domain = data.get('domain', '').strip()
         
         if not domain:
             return jsonify({
                 'success': False,
                 'message': 'Domain name is required'
-            })
+            }), 400
+        
+        logger.info(f"Adding domain {domain} to Postfix by user {current_user.id}")
         
         postfix_manager = PostfixManager()
         success = postfix_manager.add_domain(domain)
         
         if success:
             # Log the action
-            audit_log = AuditLog(
-                user_id=current_user.id,
-                action='add_postfix_domain',
-                resource_type='postfix_domain',
-                resource_id=domain,
-                details=f'Added domain to Postfix: {domain}',
-                ip_address=request.remote_addr
-            )
-            db.session.add(audit_log)
-            db.session.commit()
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='add_postfix_domain',
+                    resource_type='postfix_domain',
+                    resource_id=domain,
+                    details=f'Added domain to Postfix: {domain}',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+                logger.info(f"Audit log created for domain addition by user {current_user.id}")
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+                # Don't fail the operation if audit logging fails
             
             return jsonify({
                 'success': True,
                 'message': f'Domain {domain} added to Postfix successfully'
             })
         else:
+            logger.warning(f"Failed to add domain {domain} to Postfix by user {current_user.id}")
             return jsonify({
                 'success': False,
                 'message': f'Failed to add domain {domain} to Postfix'
-            })
+            }), 500
     except Exception as e:
+        logger.error(f"Error in postfix_add_domain: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/postfix/remove-domain', methods=['POST'])
@@ -271,44 +323,59 @@ def postfix_remove_domain():
     """Remove domain from Postfix virtual domains."""
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No JSON data provided'
+            }), 400
+        
         domain = data.get('domain', '').strip()
         
         if not domain:
             return jsonify({
                 'success': False,
                 'message': 'Domain name is required'
-            })
+            }), 400
+        
+        logger.info(f"Removing domain {domain} from Postfix by user {current_user.id}")
         
         postfix_manager = PostfixManager()
         success = postfix_manager.remove_domain(domain)
         
         if success:
             # Log the action
-            audit_log = AuditLog(
-                user_id=current_user.id,
-                action='remove_postfix_domain',
-                resource_type='postfix_domain',
-                resource_id=domain,
-                details=f'Removed domain from Postfix: {domain}',
-                ip_address=request.remote_addr
-            )
-            db.session.add(audit_log)
-            db.session.commit()
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='remove_postfix_domain',
+                    resource_type='postfix_domain',
+                    resource_id=domain,
+                    details=f'Removed domain from Postfix: {domain}',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+                logger.info(f"Audit log created for domain removal by user {current_user.id}")
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+                # Don't fail the operation if audit logging fails
             
             return jsonify({
                 'success': True,
                 'message': f'Domain {domain} removed from Postfix successfully'
             })
         else:
+            logger.warning(f"Failed to remove domain {domain} from Postfix by user {current_user.id}")
             return jsonify({
                 'success': False,
                 'message': f'Failed to remove domain {domain} from Postfix'
-            })
+            }), 500
     except Exception as e:
+        logger.error(f"Error in postfix_remove_domain: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/postfix/domains')
@@ -324,10 +391,11 @@ def postfix_get_domains():
             'domains': domains
         })
     except Exception as e:
+        logger.error(f"Error in postfix_get_domains: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/dovecot/status')
@@ -341,10 +409,11 @@ def dovecot_status():
             'status': status
         })
     except Exception as e:
+        logger.error(f"Error in dovecot_status: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/dovecot/restart', methods=['POST'])
@@ -352,36 +421,45 @@ def dovecot_status():
 def dovecot_restart():
     """Restart Dovecot service."""
     try:
+        logger.info(f"Dovecot restart requested by user {current_user.id}")
+        
         dovecot_manager = DovecotManager()
         success = dovecot_manager.restart_service()
         
         if success:
             # Log the action
-            audit_log = AuditLog(
-                user_id=current_user.id,
-                action='restart_dovecot',
-                resource_type='dovecot_service',
-                resource_id='service',
-                details='Restarted Dovecot service',
-                ip_address=request.remote_addr
-            )
-            db.session.add(audit_log)
-            db.session.commit()
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='restart_dovecot',
+                    resource_type='dovecot_service',
+                    resource_id='service',
+                    details='Restarted Dovecot service',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+                logger.info(f"Audit log created for Dovecot restart by user {current_user.id}")
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+                # Don't fail the operation if audit logging fails
             
             return jsonify({
                 'success': True,
                 'message': 'Dovecot service restarted successfully'
             })
         else:
+            logger.warning(f"Dovecot restart failed for user {current_user.id}")
             return jsonify({
                 'success': False,
                 'message': 'Failed to restart Dovecot service'
-            })
+            }), 500
     except Exception as e:
+        logger.error(f"Error in dovecot_restart: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/dovecot/reload', methods=['POST'])
@@ -389,36 +467,45 @@ def dovecot_restart():
 def dovecot_reload():
     """Reload Dovecot configuration."""
     try:
+        logger.info(f"Dovecot reload requested by user {current_user.id}")
+        
         dovecot_manager = DovecotManager()
         success = dovecot_manager.reload_config()
         
         if success:
             # Log the action
-            audit_log = AuditLog(
-                user_id=current_user.id,
-                action='reload_dovecot_config',
-                resource_type='dovecot_config',
-                resource_id='config',
-                details='Reloaded Dovecot configuration',
-                ip_address=request.remote_addr
-            )
-            db.session.add(audit_log)
-            db.session.commit()
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='reload_dovecot_config',
+                    resource_type='dovecot_config',
+                    resource_id='config',
+                    details='Reloaded Dovecot configuration',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+                logger.info(f"Audit log created for Dovecot reload by user {current_user.id}")
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+                # Don't fail the operation if audit logging fails
             
             return jsonify({
                 'success': True,
                 'message': 'Dovecot configuration reloaded successfully'
             })
         else:
+            logger.warning(f"Dovecot reload failed for user {current_user.id}")
             return jsonify({
                 'success': False,
                 'message': 'Failed to reload Dovecot configuration'
-            })
+            }), 500
     except Exception as e:
+        logger.error(f"Error in dovecot_reload: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/dovecot/check-config', methods=['POST'])
@@ -426,6 +513,8 @@ def dovecot_reload():
 def dovecot_check_config():
     """Check Dovecot configuration syntax."""
     try:
+        logger.info(f"Dovecot config check requested by user {current_user.id}")
+        
         dovecot_manager = DovecotManager()
         result = dovecot_manager.check_config()
         
@@ -434,10 +523,11 @@ def dovecot_check_config():
             'result': result
         })
     except Exception as e:
+        logger.error(f"Error in dovecot_check_config: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
-        })
+        }), 500
 
 
 @bp.route('/dovecot/user-info/<username>/<domain>')
@@ -453,7 +543,259 @@ def dovecot_user_info(username, domain):
             'user_info': user_info
         })
     except Exception as e:
+        logger.error(f"Error in dovecot_user_info: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
+        }), 500
+
+
+@bp.route('/statistics')
+@login_required
+def mail_statistics():
+    """Get comprehensive mail statistics."""
+    try:
+        postfix_manager = PostfixManager()
+        dovecot_manager = DovecotManager()
+        
+        # Get basic service status
+        postfix_status = postfix_manager.get_status()
+        dovecot_status = postfix_manager.get_dovecot_status()
+        
+        # Get queue information
+        queue_info = postfix_manager.get_queue_info()
+        
+        # Get domain information
+        domains = postfix_manager.get_virtual_domains()
+        
+        # Calculate statistics
+        stats = {
+            'services': {
+                'postfix': postfix_status,
+                'dovecot': dovecot_status
+            },
+            'queue': queue_info,
+            'domains': {
+                'total': len(domains),
+                'list': domains
+            },
+            'system': {
+                'timestamp': time.time(),
+                'uptime': _get_system_uptime()
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'statistics': stats
         })
+    except Exception as e:
+        logger.error(f"Error in mail_statistics: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+@bp.route('/system/monitoring')
+@login_required
+def system_monitoring():
+    """Get system monitoring data."""
+    try:
+        import psutil
+        
+        # Get system metrics
+        cpu_percent = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        
+        # Get network statistics
+        network = psutil.net_io_counters()
+        
+        # Get process information for mail services
+        mail_processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+            try:
+                if proc.info['name'] in ['postfix', 'dovecot', 'master', 'qmgr']:
+                    mail_processes.append(proc.info)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        
+        monitoring_data = {
+            'cpu': {
+                'percent': cpu_percent,
+                'count': psutil.cpu_count(),
+                'frequency': psutil.cpu_freq()._asdict() if psutil.cpu_freq() else None
+            },
+            'memory': {
+                'total': memory.total,
+                'available': memory.available,
+                'percent': memory.percent,
+                'used': memory.used
+            },
+            'disk': {
+                'total': disk.total,
+                'used': disk.used,
+                'free': disk.free,
+                'percent': (disk.used / disk.total) * 100
+            },
+            'network': {
+                'bytes_sent': network.bytes_sent,
+                'bytes_recv': network.bytes_recv,
+                'packets_sent': network.packets_sent,
+                'packets_recv': network.packets_recv
+            },
+            'mail_processes': mail_processes,
+            'timestamp': time.time()
+        }
+        
+        return jsonify({
+            'success': True,
+            'monitoring': monitoring_data
+        })
+    except ImportError:
+        return jsonify({
+            'success': False,
+            'message': 'psutil library not available for system monitoring'
+        }), 500
+    except Exception as e:
+        logger.error(f"Error in system_monitoring: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+@bp.route('/postfix/logs')
+@login_required
+def postfix_logs():
+    """Get recent Postfix logs."""
+    try:
+        import subprocess
+        
+        # Get recent Postfix logs (last 100 lines)
+        try:
+            result = subprocess.run(['journalctl', '-u', 'postfix', '-n', '100', '--no-pager'], 
+                                  capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                logs = result.stdout
+            else:
+                # Fallback to log file
+                result = subprocess.run(['tail', '-n', '100', '/var/log/mail.log'], 
+                                      capture_output=True, text=True, timeout=30)
+                logs = result.stdout if result.returncode == 0 else "Unable to retrieve logs"
+        except:
+            logs = "Log retrieval not available on this system"
+        
+        return jsonify({
+            'success': True,
+            'logs': logs
+        })
+    except Exception as e:
+        logger.error(f"Error in postfix_logs: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+@bp.route('/dovecot/logs')
+@login_required
+def dovecot_logs():
+    """Get recent Dovecot logs."""
+    try:
+        import subprocess
+        
+        # Get recent Dovecot logs (last 100 lines)
+        try:
+            result = subprocess.run(['journalctl', '-u', 'dovecot', '-n', '100', '--no-pager'], 
+                                  capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                logs = result.stdout
+            else:
+                # Fallback to log file
+                result = subprocess.run(['tail', '-n', '100', '/var/log/dovecot.log'], 
+                                      capture_output=True, text=True, timeout=30)
+                logs = result.stdout if result.returncode == 0 else "Unable to retrieve logs"
+        except:
+            logs = "Log retrieval not available on this system"
+        
+        return jsonify({
+            'success': True,
+            'logs': logs
+        })
+    except Exception as e:
+        logger.error(f"Error in dovecot_logs: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+@bp.route('/postfix/config/backup', methods=['POST'])
+@login_required
+def backup_postfix_config():
+    """Create a backup of Postfix configuration."""
+    try:
+        import shutil
+        import datetime
+        
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_dir = f"/tmp/postfix_backup_{timestamp}"
+        
+        # Create backup directory
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # Copy configuration files
+        config_files = ['/etc/postfix/main.cf', '/etc/postfix/master.cf']
+        for config_file in config_files:
+            if os.path.exists(config_file):
+                shutil.copy2(config_file, backup_dir)
+        
+        # Create archive
+        archive_name = f"/tmp/postfix_config_backup_{timestamp}.tar.gz"
+        shutil.make_archive(archive_name.replace('.tar.gz', ''), 'gztar', backup_dir)
+        
+        # Clean up temporary directory
+        shutil.rmtree(backup_dir)
+        
+        # Log the action
+        try:
+            audit_log = AuditLog(
+                user_id=current_user.id,
+                action='backup_postfix_config',
+                resource_type='postfix_config',
+                resource_id='backup',
+                details=f'Created Postfix configuration backup: {archive_name}',
+                ip_address=request.remote_addr
+            )
+            db.session.add(audit_log)
+            db.session.commit()
+            logger.info(f"Audit log created for config backup by user {current_user.id}")
+        except Exception as db_error:
+            logger.error(f"Failed to create audit log: {db_error}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Configuration backup created: {archive_name}',
+            'backup_file': archive_name
+        })
+    except Exception as e:
+        logger.error(f"Error in backup_postfix_config: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+def _get_system_uptime():
+    """Get system uptime information."""
+    try:
+        import subprocess
+        result = subprocess.run(['uptime', '-p'], capture_output=True, text=True, timeout=10)
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            return "Unknown"
+    except:
+        return "Unknown"
