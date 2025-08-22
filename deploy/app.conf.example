@@ -1,5 +1,7 @@
 # Application configuration (production/system)
-# Place at /etc/dreamlikelabs/mailer/app.conf
+# Place at /etc/dreamlikelabs/${APP_NAME}/app.conf
+
+APP_NAME=${APP_NAME}
 
 # Core
 FLASK_SECRET_KEY=changeme
@@ -26,7 +28,7 @@ LOG_LEVEL=INFO
 LOG_TO_CONSOLE=False
 
 # Data/Logs roots (optional overrides)
-DATA_DIR=/var/lib/dreamlikelabs/mailer/
-LOG_DIR=/var/log/dreamlikelabs/mailer/
+DATA_DIR=/var/lib/dreamlikelabs/${APP_NAME}/
+LOG_DIR=/var/log/dreamlikelabs/${APP_NAME}/
 
 

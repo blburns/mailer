@@ -1,0 +1,24 @@
+[Unit]
+Description=DreamlikeLabs Mailer Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/dreamlikelabs/mailer
+User=www-data
+Group=www-data
+EnvironmentFile=/etc/dreamlikelabs/mailer/env.conf
+ExecStart=/opt/dreamlikelabs/mailer/run.sh
+Restart=always
+RestartSec=5
+
+# Hardening (optional, adjust if needed)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
+
+
