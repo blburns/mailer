@@ -7,7 +7,7 @@ name = "postfix-manager"
 dynamic = ["version"]
 description = "A comprehensive web interface for managing Postfix, Dovecot, and OpenLDAP mail servers"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "DreamlikeLabs", email = "info@dreamlikelabs.com"}
 ]
@@ -18,7 +18,7 @@ keywords = ["postfix", "dovecot", "ldap", "mail", "server", "management", "web",
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",

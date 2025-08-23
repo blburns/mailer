@@ -70,6 +70,8 @@ def init_csrf_config(app):
     """Initialize CSRF protection."""
     app.config['WTF_CSRF_ENABLED'] = True
     app.config['WTF_CSRF_TIME_LIMIT'] = 3600
+    app.config['WTF_CSRF_HEADERS'] = ['X-CSRFToken']
+    app.config['WTF_CSRF_SSL_STRICT'] = False
 
 
 def init_config(app):

@@ -278,6 +278,11 @@
   </div>
 
   <script>
+    // CSRF token helper
+    function getCSRFToken() {
+      return '{{ csrf_token() }}';
+    }
+
     // Initialize status on page load
     document.addEventListener('DOMContentLoaded', function() {
       refreshAllStatus();
@@ -419,7 +424,13 @@
       if (confirm('Are you sure you want to restart Postfix? This will temporarily stop mail processing.')) {
         addActivityEntry('Postfix restart initiated', 'warning');
         
-        fetch('/mail/postfix/restart', { method: 'POST' })
+        fetch('/mail/postfix/restart', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+          },
+        })
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -448,7 +459,13 @@
       if (confirm('Reload Postfix configuration? This will apply configuration changes without stopping the service.')) {
         addActivityEntry('Postfix configuration reload initiated', 'info');
         
-        fetch('/mail/postfix/reload', { method: 'POST' })
+        fetch('/mail/postfix/reload', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+          },
+        })
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -474,7 +491,13 @@
     }
 
     function checkPostfixConfig() {
-      fetch('/mail/postfix/check-config', { method: 'POST' })
+      fetch('/mail/postfix/check-config', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+      })
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -500,7 +523,13 @@
 
     function restartDovecot() {
       if (confirm('Are you sure you want to restart Dovecot? This will disconnect all IMAP/POP3 users.')) {
-        fetch('/mail/dovecot/restart', { method: 'POST' })
+        fetch('/mail/dovecot/restart', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+          },
+        })
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -524,7 +553,13 @@
 
     function reloadDovecot() {
       if (confirm('Reload Dovecot configuration? This will apply configuration changes without disconnecting users.')) {
-        fetch('/mail/dovecot/reload', { method: 'POST' })
+        fetch('/mail/dovecot/reload', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+          },
+        })
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -547,7 +582,13 @@
     }
 
     function checkDovecotConfig() {
-      fetch('/mail/dovecot/check-config', { method: 'POST' })
+      fetch('/mail/dovecot/check-config', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+      })
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -573,7 +614,13 @@
 
     function flushQueue() {
       if (confirm('Are you sure you want to flush the mail queue? This will attempt to deliver all queued messages.')) {
-        fetch('/mail/postfix/flush-queue', { method: 'POST' })
+        fetch('/mail/postfix/flush-queue', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+          },
+        })
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -721,6 +768,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
         },
         body: JSON.stringify({ domain: domain })
       })
@@ -747,10 +795,11 @@
 
     function removeDomain(domain) {
       if (confirm(`Are you sure you want to remove the domain "${domain}"?`)) {
-        fetch('/mail/postfix/remove-domain', {
+        fetch('/mail/postfix/remove-domain', { 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
           },
           body: JSON.stringify({ domain: domain })
         })
