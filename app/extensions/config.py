@@ -54,14 +54,24 @@ def init_config(app):
     db_config = DbConfig()
     app.config['SQLALCHEMY_DATABASE_URI'] = db_config.get_db_uri()
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() == 'true'
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'echo': os.getenv('SQLALCHEMY_ECHO', 'false').lower() == 'true',
-        'pool_size': int(os.getenv('DB_POOL_SIZE', '10')),
-        'max_overflow': int(os.getenv('DB_MAX_OVERFLOW', '20')),
-        'pool_pre_ping': os.getenv('DB_POOL_PRE_PING', 'True').lower() == 'true',
-        'pool_recycle': int(os.getenv('DB_POOL_RECYCLE', '3600')),
-        'pool_timeout': int(os.getenv('DB_POOL_TIMEOUT', '30'))
-    }
+    
+    # Database-specific engine options
+    db_type = db_config.db_type
+    if db_type == 'sqlite':
+        # SQLite doesn't support connection pooling
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'echo': os.getenv('SQLALCHEMY_ECHO', 'false').lower() == 'true',
+        }
+    else:
+        # MySQL/PostgreSQL support connection pooling
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'echo': os.getenv('SQLALCHEMY_ECHO', 'false').lower() == 'true',
+            'pool_size': int(os.getenv('DB_POOL_SIZE', '10')),
+            'max_overflow': int(os.getenv('DB_MAX_OVERFLOW', '20')),
+            'pool_pre_ping': os.getenv('DB_POOL_PRE_PING', 'True').lower() == 'true',
+            'pool_recycle': int(os.getenv('DB_POOL_RECYCLE', '3600')),
+            'pool_timeout': int(os.getenv('DB_POOL_TIMEOUT', '30'))
+        }
     
     # Store db_config for later use
     app.config['DB_CONFIG'] = db_config
