@@ -236,22 +236,33 @@ def backup_database():
     timestamp = subprocess.run(['date', '+%Y%m%d_%H%M%S'], capture_output=True, text=True).stdout.strip()
     
     if db_type == 'sqlite':
-        db_path = os.environ.get('DATABASE_URL', '').replace('sqlite:///', '')
-        if not db_path:
-            db_path = '/opt/postfix-manager/instance/postfix_manager.db'
+        # Use the new database configuration system
+        from app.extensions.database import DbConfig
+        db_config = DbConfig()
+        db_path = db_config.db_uri.replace('sqlite:///', '')
         
         backup_path = f"{db_path}.backup.{timestamp}"
         cmd = f"cp {db_path} {backup_path}"
         
-    elif db_type == 'mysql':
+    elif db_type in ['mysql', 'mariadb']:
         db_name = os.environ.get('DB_NAME', 'postfix_manager')
+        db_hostname = os.environ.get('DB_HOSTNAME', 'localhost')
+        db_port = os.environ.get('DB_PORT', '3306')
+        db_username = os.environ.get('DB_USERNAME', 'root')
+        db_password = os.environ.get('DB_PASSWORD', '')
+        
         backup_path = f"/tmp/postfix_manager_{timestamp}.sql"
-        cmd = f"mysqldump -u{os.environ.get('DB_USER', 'root')} -p{os.environ.get('DB_PASSWORD', '')} {db_name} > {backup_path}"
+        cmd = f"mysqldump -h{db_hostname} -P{db_port} -u{db_username} -p{db_password} {db_name} > {backup_path}"
         
     elif db_type == 'postgresql':
         db_name = os.environ.get('DB_NAME', 'postfix_manager')
+        db_hostname = os.environ.get('DB_HOSTNAME', 'localhost')
+        db_port = os.environ.get('DB_PORT', '5432')
+        db_username = os.environ.get('DB_USERNAME', 'postgres')
+        db_password = os.environ.get('DB_PASSWORD', '')
+        
         backup_path = f"/tmp/postfix_manager_{timestamp}.sql"
-        cmd = f"pg_dump -U {os.environ.get('DB_USER', 'postgres')} {db_name} > {backup_path}"
+        cmd = f"PGPASSWORD='{db_password}' pg_dump -h{db_hostname} -p{db_port} -U{db_username} {db_name} > {backup_path}"
     
     success, stdout, stderr = run_command(cmd)
     
