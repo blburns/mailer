@@ -65,17 +65,23 @@ clean_directory() {
     
     # Find and remove directories
     local dirs_found=0
+    local total_size="0B"
+    
+    # Use find with -print0 and read to handle paths with spaces
     while IFS= read -r -d '' dir; do
         if [ -d "$dir" ]; then
             local size=$(get_dir_size "$dir")
+            echo -e "${YELLOW}  Removing: ${dir} (${size})${NC}"
             rm -rf "$dir" 2>/dev/null || true
-            echo -e "${GREEN}✅ Removed ${description}: ${dir} (${size})${NC}"
+            echo -e "${GREEN}    ✅ Removed${NC}"
             ((dirs_found++))
         fi
     done < <(find "$PROJECT_ROOT" -name "$dir_pattern" -type d -print0 2>/dev/null)
     
     if [ "$dirs_found" -eq 0 ]; then
         echo -e "${BLUE}ℹ️  No ${description} found${NC}"
+    else
+        echo -e "${GREEN}✅ Removed ${dirs_found} ${description}${NC}"
     fi
 }
 
@@ -94,7 +100,6 @@ main() {
     clean_file_type "*.pyc" "Python compiled files"
     clean_file_type "*.pyo" "Python optimized files"
     clean_file_type "*.pyd" "Python DLL files"
-    clean_file_type "__pycache__" "Python cache directories"
     
     # Clean Python cache directories
     clean_directory "__pycache__" "Python cache directories"
