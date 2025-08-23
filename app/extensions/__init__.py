@@ -103,6 +103,22 @@ def init_template_context(app):
             'current_year': 2025,
             'app_name': 'Postfix Manager'
         }
+    
+    # Register navigation template functions
+    @app.context_processor
+    def inject_navigation_functions():
+        from app.utils.navigation import (
+            get_breadcrumbs,
+            get_current_module,
+            is_active_route,
+            is_active_module
+        )
+        return {
+            'get_breadcrumbs': get_breadcrumbs,
+            'get_current_module': get_current_module,
+            'is_active_route': is_active_route,
+            'is_active_module': is_active_module
+        }
 
 
 def register_blueprints(app):

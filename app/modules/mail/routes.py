@@ -8,6 +8,7 @@ from app.modules.mail import bp
 from app.models import AuditLog
 from app.extensions import db
 from app.utils.mail_manager import PostfixManager, DovecotManager
+from app.utils.navigation import set_mail_breadcrumbs
 import json
 import logging
 import time
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def index():
     """Mail management dashboard."""
+    set_mail_breadcrumbs()
     return render_template('modules/mail/index.html', title='Mail Management')
 
 
