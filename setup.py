@@ -4,6 +4,8 @@ Postfix Manager Setup
 Setup configuration for the Postfix Manager application
 """
 
+import sys
+
 from setuptools import setup, find_packages
 from pathlib import Path
 
@@ -17,11 +19,38 @@ if (this_directory / "requirements.txt").exists():
     with open(this_directory / "requirements.txt") as f:
         requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
+# Fallback requirements if file doesn't exist
+if not requirements:
+    requirements = [
+        "Flask>=2.0.0,<3.0.0",
+        "Flask-Bcrypt>=1.0.1,<2.0.0",
+        "Flask-Limiter>=3.0.0,<4.0.0",
+        "Flask-Migrate>=3.0.0,<4.0.0",
+        "Flask-SQLAlchemy>=2.5.0,<3.0.0",
+        "Flask-WTF>=1.0.0,<2.0.0",
+        "Flask-Login>=0.6.0,<1.0.0",
+        "Jinja2>=3.0.0,<4.0.0",
+        "SQLAlchemy>=1.4.0,<2.0.0",
+        "python-dotenv>=1.0.0,<2.0.0",
+        "python-json-logger>=2.0.0,<3.0.0",
+        "waitress>=2.0.0,<3.0.0",
+        "requests>=2.25.0,<3.0.0",
+        "packaging>=20.0,<26.0",
+        "ldap3>=2.9.0,<3.0.0",
+        "psutil>=5.8.0,<6.0.0",
+        "python-ldap>=3.3.0,<4.0.0",
+        "cryptography>=3.4.0,<43.0.0",
+    ]
+
+# Version check
+if sys.version_info < (3, 8):
+    sys.exit("Postfix Manager requires Python 3.8 or higher")
+
 setup(
     name="postfix-manager",
-    version="1.0.0",
+    version="0.1.0",
     author="DreamlikeLabs",
-    author_email="info@dreamlikelabs.com",
+    author_email="contact-info@dreamlikelabs.com",
     description="A comprehensive web interface for managing Postfix, Dovecot, and OpenLDAP mail servers",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -41,6 +70,9 @@ setup(
         "Topic :: Communications :: Email :: Mail Transport Agents",
         "Topic :: System :: Systems Administration",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: System :: Networking :: Monitoring",
+        "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
     ],
     python_requires=">=3.8,<3.13",
     install_requires=requirements,
@@ -63,8 +95,11 @@ setup(
         ],
     },
     include_package_data=True,
+    package_data={
+        "app": ["**/*.html", "**/*.css", "**/*.js", "**/*.py", "**/*.txt", "**/*.md"],
+    },
     zip_safe=False,
-    keywords="postfix dovecot ldap mail server management web interface",
+    keywords="postfix dovecot ldap mail server management web interface flask",
     project_urls={
         "Bug Reports": "https://github.com/dreamlikelabs/postfix-manager/issues",
         "Source": "https://github.com/dreamlikelabs/postfix-manager",
