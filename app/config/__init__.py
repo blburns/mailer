@@ -64,3 +64,13 @@ def get_migration_config():
         'MIGRATION_DIR': f'migrations/{db_type}',
         'DB_TYPE': db_type
     }
+
+
+def get_sqlalchemy_config():
+    """Get SQLAlchemy-specific configuration."""
+    return {
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'SQLALCHEMY_ENGINE_OPTIONS': {
+            'echo': os.environ.get('SQLALCHEMY_ECHO', 'false').lower() == 'true',
+        }
+    }

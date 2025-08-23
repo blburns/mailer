@@ -5,7 +5,7 @@ Safe to commit to version control
 
 import os
 from pathlib import Path
-from . import get_database_config, get_migration_config
+from . import get_database_config, get_migration_config, get_sqlalchemy_config
 
 class DevelopmentConfig:
     """Development configuration."""
@@ -19,7 +19,10 @@ class DevelopmentConfig:
     db_config = get_database_config()
     SQLALCHEMY_DATABASE_URI = db_config['SQLALCHEMY_DATABASE_URI']
     SQLALCHEMY_ENGINE_OPTIONS = db_config['SQLALCHEMY_ENGINE_OPTIONS']
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # SQLAlchemy configuration
+    sqlalchemy_config = get_sqlalchemy_config()
+    SQLALCHEMY_TRACK_MODIFICATIONS = sqlalchemy_config['SQLALCHEMY_TRACK_MODIFICATIONS']
     
     # Migration configuration
     migration_config = get_migration_config()
@@ -37,6 +40,7 @@ class DevelopmentConfig:
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URL = 'memory://'
     RATELIMIT_DEFAULT = '200 per day;50 per hour;1 per second'
+    FLASK_LIMITER_ENABLED = os.environ.get('FLASK_LIMITER_ENABLED', 'true').lower() == 'true'
     
     # Logging
     LOG_LEVEL = 'DEBUG'

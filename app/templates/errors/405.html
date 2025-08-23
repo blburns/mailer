@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <div class="mx-auto h-24 w-24 text-purple-400">
+                <svg class="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+            </div>
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                Method Not Allowed
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                The HTTP method used is not allowed for this resource.
+            </p>
+        </div>
+        
+        <div class="mt-8 space-y-4">
+            <div class="text-center">
+                <a href="{{ url_for('main.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    Go Home
+                </a>
+            </div>
+            
+            <div class="text-center">
+                <button onclick="javascript:history.back()" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Go Back
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>Please use a different HTTP method or contact support if you believe this is an error.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

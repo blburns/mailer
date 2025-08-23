@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}I'm a Teapot{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <div class="mx-auto h-24 w-24 text-orange-400">
+                <svg class="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                🫖 I'm a Teapot
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                The server refuses to brew coffee because it is, permanently, a teapot.
+            </p>
+            <p class="mt-2 text-xs text-gray-500">
+                (HTTP 418 - This is a real status code, originally an April Fools' joke!)
+            </p>
+        </div>
+        
+        <div class="mt-8 space-y-4">
+            <div class="text-center">
+                <a href="{{ url_for('main.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    🏠 Go Home
+                </a>
+            </div>
+            
+            <div class="text-center">
+                <button onclick="location.reload()" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    🔄 Try Again
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>☕ Maybe try asking for tea instead?</p>
+            <p class="mt-2 text-xs">RFC 2324 - Hyper Text Coffee Pot Control Protocol</p>
+        </div>
+        
+        <div class="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+            <div class="text-center text-sm text-orange-800">
+                <p class="font-medium">Teapot Facts:</p>
+                <p class="mt-1">• This status code was defined in 1998 as an April Fools' joke</p>
+                <p class="mt-1">• It's now used by some APIs to indicate they can't process the request</p>
+                <p class="mt-1">• The original RFC was about controlling coffee pots over HTTP</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,7 +4,7 @@ Contains sensitive information - DO NOT commit to version control
 """
 
 import os
-from . import get_database_config, get_migration_config
+from . import get_database_config, get_migration_config, get_sqlalchemy_config
 
 class ProductionConfig:
     """Production configuration."""
@@ -33,9 +33,10 @@ class ProductionConfig:
     SESSION_COOKIE_SAMESITE = 'Strict'
     
     # Rate limiting
-    RATELIMIT_ENABLED = True
-    RATELIMIT_STORAGE_URL = os.environ.get('RATELIMIT_STORAGE_URL', 'redis://localhost:6379/0')
-    RATELIMIT_DEFAULT = '100 per day;20 per hour;1 per second'
+RATELIMIT_ENABLED = True
+RATELIMIT_STORAGE_URL = os.environ.get('RATELIMIT_STORAGE_URL', 'redis://localhost:6379/0')
+RATELIMIT_DEFAULT = '100 per day;20 per hour;1 per second'
+FLASK_LIMITER_ENABLED = os.environ.get('FLASK_LIMITER_ENABLED', 'true').lower() == 'true'
     
     # Logging
     LOG_LEVEL = 'INFO'
