@@ -62,6 +62,38 @@ Default login credentials:
 
 **Important**: Change the default password immediately after first login!
 
+## Documentation
+
+### 📚 **Guides & References**
+
+- **[Database Management Guide](docs/DATABASE_MANAGEMENT.md)** - Complete guide to database setup, migrations, recovery, and troubleshooting
+- **[API Endpoints](docs/API_ENDPOINTS.md)** - REST API documentation
+- **[Web Endpoints](docs/WEB_ENDPOINTS.md)** - Web interface routes and functionality
+- **[Development Roadmap](docs/development_roadmap.md)** - Planned features and development timeline
+- **[VM Development Workflow](docs/VM_DEVELOPMENT_WORKFLOW.md)** - Guide for developing on virtual machines
+
+### 🗄️ **Database Management Quick Reference**
+
+For database issues, recovery, or setup:
+
+```bash
+# Quick database recovery
+make migrate-upgrade-pg      # Recreate PostgreSQL database
+make migrate-upgrade-mysql   # Recreate MySQL database
+make migrate-upgrade-sqlite  # Recreate SQLite database
+
+# Check database status
+make migrate-current         # View all database versions
+make db-test                # Test database connectivity
+
+# Complete system recovery
+make db-reset               # Reset database (WARNING: deletes all data)
+make migrate-upgrade-pg      # Recreate schema
+python scripts/create_admin.py  # Create admin user
+```
+
+**📖 See [Database Management Guide](docs/DATABASE_MANAGEMENT.md) for complete details.**
+
 ## Installation
 
 ### Automated Installation (Recommended)
