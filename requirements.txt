@@ -8,8 +8,8 @@ Flask-Login>=0.6.0,<1.0.0
 Jinja2>=3.0.0,<4.0.0
 SQLAlchemy>=1.4.0,<2.0.0
 python-dotenv>=1.0.0,<2.0.0
-python-json-logger>=2.0.0,<3.0.0
-waitress>=2.0.0,<3.0.0
+python-json-logger>=2.0.0,<2.0.0
+waitress>=2.0.0,<2.0.0
 requests>=2.25.0,<3.0.0
 packaging>=20.0,<26.0
 ldap3>=2.9.0,<3.0.0
@@ -17,6 +17,13 @@ psutil>=5.8.0,<6.0.0
 python-ldap>=3.3.0,<4.0.0
 cryptography>=3.4.0,<43.0.0
 
-# Database Drivers
+# Database Drivers - Core (Required for main databases)
 PyMySQL>=1.0.0,<2.0.0  # MySQL/MariaDB driver
 psycopg2-binary>=2.9.0,<3.0.0  # PostgreSQL driver
+
+# Database Drivers - Optional (Uncomment if needed)
+# cx_Oracle>=8.0.0,<9.0.0  # Oracle database driver
+# pyodbc>=4.0.0,<5.0.0  # Microsoft SQL Server driver (ODBC)
+# pymssql>=2.2.0,<3.0.0  # Microsoft SQL Server driver (native)
+# fdb>=2.0.0,<3.0.0  # Firebird database driver
+# ibm_db_sa>=0.3.0,<1.0.0  # IBM DB2 driver
