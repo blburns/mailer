@@ -10,6 +10,7 @@ A comprehensive web interface for managing Postfix, Dovecot, and OpenLDAP mail s
 - **LDAP Directory Management**: Browse and manage LDAP directory structure
 - **Virtual Mail Hosting**: Support for multiple domains and users
 - **User Management**: Create and manage mail users with quotas
+- **System Management**: Comprehensive system configuration, monitoring, and audit logging
 - **Audit Logging**: Comprehensive logging of all system changes
 - **Multi-platform Support**: Install on Debian/Ubuntu and RedHat/CentOS systems
 

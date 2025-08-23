@@ -11,6 +11,7 @@ from app.main import bp
 @login_required
 def index():
     """Homepage."""
+    # return redirect(url_for('dashboard.index'))
     return render_template('modules/main/index.html', title='Home')
 
 

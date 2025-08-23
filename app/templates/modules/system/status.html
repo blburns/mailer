@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}System Status{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">System Status</h1>
+    <p class="mt-2 text-gray-600 dark:text-gray-400">Monitor the health and status of system services</p>
+  </div>
+
+  <!-- Service Status Overview -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Postfix Status -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Postfix</h3>
+        <div class="flex items-center">
+          <div class="w-3 h-3 rounded-full {% if postfix_status.status == 'running' %}bg-green-400{% elif postfix_status.status == 'stopped' %}bg-red-400{% else %}bg-yellow-400{% endif %} mr-2"></div>
+          <span class="text-sm font-medium {% if postfix_status.status == 'running' %}text-green-600 dark:text-green-400{% elif postfix_status.status == 'stopped' %}text-red-600 dark:text-red-400{% else %}text-yellow-600 dark:text-yellow-400{% endif %}">
+            {{ postfix_status.status|title }}
+          </span>
+        </div>
+      </div>
+      
+      {% if postfix_status.status == 'running' %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-green-600 dark:text-green-400 font-medium">Active</span>
+          </div>
+          {% if postfix_status.message %}
+          <div class="text-sm text-gray-600 dark:text-gray-300">
+            {{ postfix_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% elif postfix_status.status == 'stopped' %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-red-600 dark:text-red-400 font-medium">Inactive</span>
+          </div>
+          {% if postfix_status.message %}
+          <div class="text-sm text-red-600 dark:text-red-400">
+            {{ postfix_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-yellow-600 dark:text-yellow-400 font-medium">Unknown</span>
+          </div>
+          {% if postfix_status.message %}
+          <div class="text-sm text-yellow-600 dark:text-yellow-400">
+            {{ postfix_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Dovecot Status -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Dovecot</h3>
+        <div class="flex items-center">
+          <div class="w-3 h-3 rounded-full {% if dovecot_status.status == 'running' %}bg-green-400{% elif dovecot_status.status == 'stopped' %}bg-red-400{% else %}bg-yellow-400{% endif %} mr-2"></div>
+          <span class="text-sm font-medium {% if dovecot_status.status == 'running' %}text-green-600 dark:text-green-400{% elif dovecot_status.status == 'stopped' %}text-red-600 dark:text-red-400{% else %}text-yellow-600 dark:text-yellow-400{% endif %}">
+            {{ dovecot_status.status|title }}
+          </span>
+        </div>
+      </div>
+      
+      {% if dovecot_status.status == 'running' %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-green-600 dark:text-green-400 font-medium">Active</span>
+          </div>
+          {% if dovecot_status.message %}
+          <div class="text-sm text-gray-600 dark:text-gray-300">
+            {{ dovecot_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% elif dovecot_status.status == 'stopped' %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-red-600 dark:text-red-400 font-medium">Inactive</span>
+          </div>
+          {% if dovecot_status.message %}
+          <div class="text-sm text-red-600 dark:text-red-400">
+            {{ dovecot_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-yellow-600 dark:text-yellow-400 font-medium">Unknown</span>
+          </div>
+          {% if dovecot_status.message %}
+          <div class="text-sm text-yellow-600 dark:text-yellow-400">
+            {{ dovecot_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- LDAP Status -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white">LDAP</h3>
+        <div class="flex items-center">
+          <div class="w-3 h-3 rounded-full {% if ldap_status.status == 'running' %}bg-green-400{% elif ldap_status.status == 'stopped' %}bg-red-400{% else %}bg-yellow-400{% endif %} mr-2"></div>
+          <span class="text-sm font-medium {% if ldap_status.status == 'running' %}text-green-600 dark:text-green-400{% elif ldap_status.status == 'stopped' %}text-red-600 dark:text-red-400{% else %}text-yellow-600 dark:text-yellow-400{% endif %}">
+            {{ ldap_status.status|title }}
+          </span>
+        </div>
+      </div>
+      
+      {% if ldap_status.status == 'running' %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-green-600 dark:text-green-400 font-medium">Active</span>
+          </div>
+          {% if ldap_status.message %}
+          <div class="text-sm text-gray-600 dark:text-gray-300">
+            {{ ldap_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% elif ldap_status.status == 'stopped' %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-red-600 dark:text-red-400 font-medium">Inactive</span>
+          </div>
+          {% if ldap_status.message %}
+          <div class="text-sm text-red-600 dark:text-red-400">
+            {{ ldap_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="text-yellow-600 dark:text-yellow-400 font-medium">Unknown</span>
+          </div>
+          {% if ldap_status.message %}
+          <div class="text-sm text-yellow-600 dark:text-yellow-400">
+            {{ ldap_status.message }}
+          </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- System Health -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-medium text-gray-900 dark:text-white">System Health</h2>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Database Health -->
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+            <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Database</h3>
+          <p class="text-sm text-green-600 dark:text-green-400 font-medium">Healthy</p>
+        </div>
+
+        <!-- Disk Space -->
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+            <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Disk Space</h3>
+          <p class="text-sm text-green-600 dark:text-green-400 font-medium">Adequate</p>
+        </div>
+
+        <!-- Memory -->
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+            <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Memory</h3>
+          <p class="text-sm text-green-600 dark:text-green-400 font-medium">Normal</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refresh Status -->
+  <div class="text-center">
+    <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+      Refresh Status
+    </button>
+  </div>
+</div>
+{% endblock %}

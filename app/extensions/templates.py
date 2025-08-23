@@ -38,7 +38,7 @@ def init_template_context(app):
             path_parts = request.path.strip('/').split('/')
             
             # Always start with home
-            breadcrumbs.append(('Home', '/'))
+            # breadcrumbs.append(('Home', '/'))
             
             # Build breadcrumbs from path
             current_path = ''

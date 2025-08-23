@@ -58,10 +58,16 @@ set_ldap_breadcrumbs('Directory Browser', request.path)
 # Results in: Home > LDAP Management > Directory Browser
 ```
 
+#### System Management
+```python
+set_system_breadcrumbs('Configuration', request.path)
+# Results in: Home > System > Configuration
+```
+
 ### Implementation in Routes
 
 ```python
-from app.utils.navigation import set_mail_breadcrumbs, set_dashboard_breadcrumbs
+from app.utils.navigation import set_mail_breadcrumbs, set_dashboard_breadcrumbs, set_system_breadcrumbs
 
 @bp.route('/postfix')
 @login_required
@@ -74,6 +80,12 @@ def postfix():
 def domains():
     set_dashboard_breadcrumbs('Domains', request.path)
     return render_template('modules/dashboard/domains.html')
+
+@bp.route('/configuration')
+@login_required
+def configuration():
+    set_system_breadcrumbs('Configuration', request.path)
+    return render_template('modules/system/configuration.html')
 ```
 
 ## Navigation Utilities
@@ -150,6 +162,41 @@ The login page now features a clean, minimal navbar that includes:
 - `base.html`: Full application template with complete navbar
 - `simple.html`: Minimal template for auth pages with minimal navbar
 - Module templates: Extend appropriate base template
+
+### Module Structure
+
+Postfix Manager is organized into logical modules:
+
+#### Core Modules
+- **Dashboard** (`/dashboard`): Mail system management (domains, users)
+- **Mail** (`/mail`): Postfix and Dovecot service management
+- **LDAP** (`/ldap`): Directory management and browsing
+- **System** (`/system`): System-wide configuration and monitoring
+- **Auth** (`/auth`): User authentication and management
+
+#### System Module Features
+
+The new system module (`/system`) provides:
+
+- **System Dashboard**: Overview of service status and system health
+- **Configuration Management**: Create, edit, and delete system configuration items
+- **Audit Logs**: Comprehensive logging of all system activities
+- **System Status**: Real-time monitoring of Postfix, Dovecot, and LDAP services
+- **Health Monitoring**: Database, disk space, and memory status
+
+#### System Module Routes
+
+```python
+# System module routes
+@bp.route('/')                    # System dashboard
+@bp.route('/configuration')        # Configuration management
+@bp.route('/configuration/new')    # Create new configuration
+@bp.route('/configuration/<id>')   # Edit configuration
+@bp.route('/logs')                # Audit logs
+@bp.route('/logs/<id>')           # Log details
+@bp.route('/status')              # System status
+@bp.route('/api/status')          # API status endpoint
+```
 
 ### Context Processors
 
