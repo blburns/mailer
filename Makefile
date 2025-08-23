@@ -34,7 +34,10 @@ help:
 	@echo "  db-history     Show migration history"
 	@echo "  db-current     Show current revision"
 	@echo "  db-test        Test database connection"
-	@echo "  db-migrations-init Initialize migrations for current database"
+	@echo "  db-seed        Seed database with test data"
+	@echo "  db-backup      Create database backup"
+	@echo "  db-reset       Reset database (WARNING: deletes all data)"
+	@echo "  db-switch      Switch database type (sqlite/mysql/postgresql)"
 	@echo ""
 	@echo "VM Operations:"
 	@echo "  deploy-vm      Deploy to Ubuntu VM"
@@ -139,37 +142,88 @@ build-package:
 db-init:
 	@echo "Initializing database..."
 	@if [ -f "venv/bin/python" ]; then \
-		venv/bin/python scripts/init_db.py; \
+		venv/bin/python scripts/manage_db.py init; \
 	else \
-		python scripts/init_db.py; \
+		python scripts/manage_db.py init; \
 	fi
 
 # Run database migrations
 db-migrate:
 	@echo "Running database migrations..."
-	@if [ -f "venv/bin/flask" ]; then \
-		venv/bin/flask db migrate -m "Auto-generated migration"; \
+	@if [ -f "venv/bin/python" ]; then \
+		venv/bin/python scripts/manage_db.py migrate; \
 	else \
-		flask db migrate -m "Auto-generated migration"; \
+		python scripts/manage_db.py migrate; \
 	fi
 
 # Upgrade database schema
 db-upgrade:
 	@echo "Upgrading database schema..."
-	@if [ -f "venv/bin/flask" ]; then \
-		venv/bin/flask db upgrade; \
+	@if [ -f "venv/bin/python" ]; then \
+		venv/bin/python scripts/manage_db.py upgrade; \
 	else \
-		flask db upgrade; \
+		python scripts/manage_db.py upgrade; \
 	fi
 
 # Downgrade database schema
 db-downgrade:
 	@echo "Downgrading database schema..."
-	@if [ -f "venv/bin/flask" ]; then \
-		venv/bin/flask db downgrade; \
+	@if [ -f "venv/bin/python" ]; then \
+		venv/bin/python scripts/manage_db.py downgrade; \
 	else \
-		flask db downgrade; \
+		python scripts/manage_db.py downgrade; \
 	fi
+
+# Show current migration version
+db-current:
+	@echo "Current migration version:"
+	@if [ -f "venv/bin/python" ]; then \
+		venv/bin/python scripts/manage_db.py current; \
+	else \
+		python scripts/manage_db.py current; \
+	fi
+
+# Show migration history
+db-history:
+	@echo "Migration history:"
+	@if [ -f "venv/bin/python" ]; then \
+		venv/bin/python scripts/manage_db.py history; \
+	else \
+		python scripts/manage_db.py history; \
+	fi
+
+# Seed database with test data
+db-seed:
+	@echo "Seeding database with test data..."
+	@if [ -f "venv/bin/python" ]; then \
+		venv/bin/python scripts/manage_db.py seed; \
+	else \
+		python scripts/manage_db.py seed; \
+	fi
+
+# Create database backup
+db-backup:
+	@echo "Creating database backup..."
+	@if [ -f "venv/bin/python" ]; then \
+		venv/bin/python scripts/manage_db.py backup; \
+	else \
+		python scripts/manage_db.py backup; \
+	fi
+
+# Reset database (WARNING: deletes all data)
+db-reset:
+	@echo "WARNING: This will delete all data!"
+	@if [ -f "venv/bin/python" ]; then \
+		venv/bin/python scripts/manage_db.py reset; \
+	else \
+		python scripts/manage_db.py reset; \
+	fi
+
+# Switch database type
+db-switch:
+	@echo "Available database types: sqlite, mysql, postgresql"
+	@echo "Set DB_TYPE environment variable to switch databases"
+	@echo "Example: DB_TYPE=mysql make db-init"
 
 # Create admin user
 create-admin:
