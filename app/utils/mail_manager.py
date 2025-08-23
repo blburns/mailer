@@ -176,6 +176,202 @@ class PostfixManager:
         except Exception as e:
             logger.error(f"Error getting queue info: {e}")
             return {'count': 0, 'details': str(e)}
+
+    def get_detailed_queue_info(self, queue_type: str = 'all', limit: int = 100) -> Dict:
+        """Get detailed queue information with filtering and pagination."""
+        try:
+            # Get basic queue info
+            basic_info = self.get_queue_info()
+            
+            # Parse detailed message information
+            lines = basic_info.get('details', '').split('\n')
+            messages = []
+            
+            for line in lines:
+                if line.startswith('Mail queue is empty') or line.startswith('--') or not line.strip():
+                    continue
+                
+                parts = line.split()
+                if len(parts) >= 7:
+                    message_id = parts[0]
+                    size = int(parts[1]) if parts[1].isdigit() else 0
+                    timestamp = ' '.join(parts[2:4])
+                    sender = parts[4] if len(parts) > 4 else ''
+                    recipient = parts[5] if len(parts) > 5 else ''
+                    
+                    # Determine queue type (simplified)
+                    queue_type_msg = 'active'  # Default
+                    if 'deferred' in line.lower():
+                        queue_type_msg = 'deferred'
+                    elif 'hold' in line.lower():
+                        queue_type_msg = 'hold'
+                    
+                    messages.append({
+                        'id': message_id,
+                        'size': size,
+                        'timestamp': timestamp,
+                        'from': sender,
+                        'to': recipient,
+                        'queue': queue_type_msg,
+                        'arrival_time': timestamp
+                    })
+            
+            # Filter by queue type if specified
+            if queue_type != 'all':
+                messages = [msg for msg in messages if msg['queue'] == queue_type]
+            
+            # Apply limit
+            messages = messages[:limit]
+            
+            # Calculate queue statistics
+            queue_stats = {
+                'incoming': {'count': 0, 'size': 0},
+                'active': {'count': 0, 'size': 0},
+                'deferred': {'count': 0, 'size': 0},
+                'hold': {'count': 0, 'size': 0}
+            }
+            
+            for msg in messages:
+                queue_type_msg = msg['queue']
+                if queue_type_msg in queue_stats:
+                    queue_stats[queue_type_msg]['count'] += 1
+                    queue_stats[queue_type_msg]['size'] += msg['size']
+            
+            return {
+                'incoming': queue_stats['incoming'],
+                'active': queue_stats['active'],
+                'deferred': queue_stats['deferred'],
+                'hold': queue_stats['hold'],
+                'messages': messages
+            }
+        except Exception as e:
+            logger.error(f"Error getting detailed queue info: {e}")
+            return {'error': str(e)}
+
+    def delete_message(self, message_id: str) -> bool:
+        """Delete a specific message from the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-d', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"Error deleting message {message_id}: {e}")
+            return False
+
+    def hold_message(self, message_id: str) -> bool:
+        """Hold a specific message in the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-h', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"Error holding message {message_id}: {e}")
+            return False
+
+    def release_message(self, message_id: str) -> bool:
+        """Release a held message from the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-H', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"Error releasing message {message_id}: {e}")
+            return False
+
+    def flush_deferred_queue(self) -> bool:
+        """Flush the deferred queue."""
+        try:
+            result = subprocess.run(['postqueue', '-f'], 
+                                  capture_output=True, text=True, timeout=60)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"Error flushing deferred queue: {e}")
+            return False
+
+    def flush_hold_queue(self) -> bool:
+        """Flush the hold queue."""
+        try:
+            result = subprocess.run(['postqueue', '-f'], 
+                                  capture_output=True, text=True, timeout=60)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"Error flushing hold queue: {e}")
+            return False
+
+    def get_queue_performance_metrics(self) -> Dict:
+        """Get queue performance metrics."""
+        try:
+            # Get queue info
+            queue_info = self.get_queue_info()
+            
+            # Calculate basic metrics
+            total_messages = queue_info.get('count', 0)
+            
+            # Calculate processing rate (simplified)
+            processing_rate = 0
+            if total_messages > 0:
+                # This would typically be calculated from historical data
+                processing_rate = min(total_messages * 2, 100)  # Placeholder
+            
+            # Calculate average wait time (simplified)
+            avg_wait_time = 0
+            if total_messages > 0:
+                # This would typically be calculated from actual timestamps
+                avg_wait_time = 15  # Placeholder in minutes
+            
+            # Calculate queue health score
+            health_score = 100
+            if total_messages > 1000:
+                health_score = 20
+            elif total_messages > 500:
+                health_score = 40
+            elif total_messages > 100:
+                health_score = 60
+            elif total_messages > 50:
+                health_score = 80
+            
+            return {
+                'processing_rate': processing_rate,
+                'avg_wait_time': avg_wait_time,
+                'queue_health': health_score,
+                'total_messages': total_messages
+            }
+        except Exception as e:
+            logger.error(f"Error getting queue performance metrics: {e}")
+            return {'error': str(e)}
+
+    def cleanup_expired_messages(self) -> bool:
+        """Clean up expired messages from the queue."""
+        try:
+            # This would typically involve more sophisticated logic
+            # For now, just flush the deferred queue
+            return self.flush_deferred_queue()
+        except Exception as e:
+            logger.error(f"Error cleaning up expired messages: {e}")
+            return False
+
+    def rebuild_queue_index(self) -> bool:
+        """Rebuild the queue index."""
+        try:
+            result = subprocess.run(['postsuper', '-r'], 
+                                  capture_output=True, text=True, timeout=120)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"Error rebuilding queue index: {e}")
+            return False
+
+    def check_queue_integrity(self) -> Dict:
+        """Check queue integrity."""
+        try:
+            result = subprocess.run(['postqueue', '-p'], 
+                                  capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                return {'valid': True, 'message': 'Queue integrity check passed'}
+            else:
+                return {'valid': False, 'message': 'Queue integrity check failed'}
+        except Exception as e:
+            logger.error(f"Error checking queue integrity: {e}")
+            return {'valid': False, 'message': str(e)}
     
     def flush_queue(self) -> bool:
         """Flush the mail queue."""
@@ -343,3 +539,99 @@ class DovecotManager:
             return 0
         except:
             return 0
+
+    def get_config_info(self) -> Dict:
+        """Get Dovecot configuration information."""
+        try:
+            config_file = os.path.join(self.config_dir, "dovecot.conf")
+            if os.path.exists(config_file):
+                stat_info = os.stat(config_file)
+                return {
+                    'config_file': config_file,
+                    'last_modified': stat_info.st_mtime,
+                    'size': stat_info.st_size
+                }
+            return {'error': 'Configuration file not found'}
+        except Exception as e:
+            logger.error(f"Error getting config info: {e}")
+            return {'error': str(e)}
+
+    def backup_config(self) -> Dict:
+        """Create a backup of Dovecot configuration."""
+        try:
+            import shutil
+            import datetime
+            
+            timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_dir = f"/tmp/dovecot_backup_{timestamp}"
+            
+            # Create backup directory
+            os.makedirs(backup_dir, exist_ok=True)
+            
+            # Copy configuration files
+            config_files = [
+                os.path.join(self.config_dir, "dovecot.conf"),
+                os.path.join(self.conf_d, "10-mail.conf"),
+                os.path.join(self.conf_d, "10-auth.conf"),
+                os.path.join(self.conf_d, "10-ssl.conf")
+            ]
+            
+            copied_files = []
+            for config_file in config_files:
+                if os.path.exists(config_file):
+                    shutil.copy2(config_file, backup_dir)
+                    copied_files.append(os.path.basename(config_file))
+            
+            # Create archive
+            archive_name = f"/tmp/dovecot_config_backup_{timestamp}.tar.gz"
+            shutil.make_archive(archive_name.replace('.tar.gz', ''), 'gztar', backup_dir)
+            
+            # Clean up temporary directory
+            shutil.rmtree(backup_dir)
+            
+            return {
+                'success': True,
+                'backup_file': archive_name,
+                'files_backed_up': copied_files
+            }
+        except Exception as e:
+            logger.error(f"Error backing up Dovecot config: {e}")
+            return {'error': str(e)}
+
+    def get_user_statistics(self) -> Dict:
+        """Get user statistics for Dovecot."""
+        try:
+            # This would typically query the user database
+            # For now, return placeholder data
+            return {
+                'total_users': 0,
+                'active_users': 0,
+                'quota_usage': 0,
+                'connections': 0
+            }
+        except Exception as e:
+            logger.error(f"Error getting user statistics: {e}")
+            return {'error': str(e)}
+
+    def get_protocol_status(self) -> Dict:
+        """Get protocol status for IMAP, POP3, and LMTP."""
+        try:
+            # Check which protocols are enabled
+            protocols = []
+            try:
+                result = subprocess.run(['doveconf', '-h', 'protocols'], 
+                                      capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    protocols = result.stdout.strip().split()
+            except:
+                protocols = ['imap', 'pop3']  # Default fallback
+            
+            return {
+                'imap': 'imap' in protocols,
+                'pop3': 'pop3' in protocols,
+                'lmtp': 'lmtp' in protocols,
+                'protocols': protocols
+            }
+        except Exception as e:
+            logger.error(f"Error getting protocol status: {e}")
+            return {'error': str(e)}

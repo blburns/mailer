@@ -307,9 +307,17 @@ class TestDataSeeder:
                 ('system.session_timeout', '3600', 'Session timeout in seconds')
             ]
             
+            # Get existing config keys to avoid duplicates
+            existing_keys = set(config.key for config in SystemConfig.query.all())
+            
             for i, (key, value, description) in enumerate(common_configs):
                 if i >= count:
                     break
+                
+                # Skip if key already exists
+                if key in existing_keys:
+                    self._log(f"Skipping existing config key: {key}")
+                    continue
                 
                 config = SystemConfig(
                     key=key,
@@ -322,24 +330,36 @@ class TestDataSeeder:
                 configs_created.append(config)
             
             # Add some random custom configurations
-            remaining_count = count - len(common_configs)
-            for i in range(remaining_count):
-                key = f"custom.setting_{i+1}"
-                value = random.choice(['true', 'false', '100', '200', 'custom_value'])
-                description = f"Custom configuration setting {i+1}"
-                
-                config = SystemConfig(
-                    key=key,
-                    value=value,
-                    description=description,
-                    updated_at=datetime.now(timezone.utc) - timedelta(days=random.randint(0, 30))
-                )
-                
-                db.session.add(config)
-                configs_created.append(config)
+            remaining_count = count - len(configs_created)
+            if remaining_count > 0:
+                for i in range(remaining_count):
+                    # Generate unique custom keys
+                    key = f"custom.setting_{random.randint(1000, 9999)}_{i+1}"
+                    
+                    # Ensure key is unique
+                    while key in existing_keys:
+                        key = f"custom.setting_{random.randint(1000, 9999)}_{i+1}"
+                    
+                    value = random.choice(['true', 'false', '100', '200', 'custom_value'])
+                    description = f"Custom configuration setting {i+1}"
+                    
+                    config = SystemConfig(
+                        key=key,
+                        value=value,
+                        description=description,
+                        updated_at=datetime.now(timezone.utc) - timedelta(days=random.randint(0, 30))
+                    )
+                    
+                    db.session.add(config)
+                    configs_created.append(config)
+                    existing_keys.add(key)  # Add to set to avoid duplicates in this session
             
-            db.session.commit()
-            self._log(f"Created {len(configs_created)} system configurations")
+            if configs_created:
+                db.session.commit()
+                self._log(f"Created {len(configs_created)} system configurations")
+            else:
+                self._log("No new system configurations needed (all already exist)")
+            
             return configs_created
     
     def seed_audit_logs(self, users, domain_ids, domain_names, mail_users, count=100):

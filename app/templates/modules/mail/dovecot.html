@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% block title %}Dovecot Management{% endblock %}
+{% block content %}
+  <div class="max-w-screen-xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">
+          Dovecot IMAP/POP3 Management
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">
+          Configure and manage the Mail Delivery Agent
+        </p>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{{ url_for('mail.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Mail
+        </a>
+        <button onclick="refreshDovecotStatus()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Service Status Card -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Service Status</h3>
+        <span id="dovecot-status-badge" class="px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+          Loading...
+        </span>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="service-status">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Service Status</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="process-count">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Processes</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="last-updated">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Last Updated</div>
+        </div>
+      </div>
+      
+      <div class="flex flex-wrap gap-3">
+        <button onclick="restartDovecot()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          Restart Service
+        </button>
+        <button onclick="reloadDovecot()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          Reload Config
+        </button>
+        <button onclick="checkDovecotConfig()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          Check Configuration
+        </button>
+        <button onclick="showDovecotLogs()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          View Logs
+        </button>
+      </div>
+    </div>
+
+    <!-- Configuration Management -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Configuration Management</h3>
+        <div class="flex space-x-2">
+          <button onclick="backupDovecotConfig()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Backup Config
+          </button>
+          <button onclick="showConfigEditor()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            Edit Config
+          </button>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Protocol Settings</h4>
+          <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <div><span class="font-medium">IMAP:</span> <span id="imap-status">-</span></div>
+            <div><span class="font-medium">POP3:</span> <span id="pop3-status">-</span></div>
+            <div><span class="font-medium">LMTP:</span> <span id="lmtp-status">-</span></div>
+          </div>
+        </div>
+        
+        <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Security Settings</h4>
+          <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <div><span class="font-medium">SSL/TLS:</span> <span id="ssl-status">-</span></div>
+            <div><span class="font-medium">Authentication:</span> <span id="auth-status">-</span></div>
+            <div><span class="font-medium">Plain Text:</span> <span id="plaintext-status">-</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Management -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">User Management</h3>
+        <button onclick="refreshUserInfo()" class="inline-flex items-center px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh Users
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="total-users">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Total Users</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="active-users">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Active Users</div>
+        </div>
+        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white" id="quota-usage">-</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Quota Usage</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs Display -->
+    <div id="logs-section" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 mb-8 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Recent Logs</h3>
+        <button onclick="hideLogs()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+          Close
+        </button>
+      </div>
+      <div class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+        <pre id="logs-content"></pre>
+      </div>
+    </div>
+
+    <!-- Configuration Editor Modal -->
+    <div id="config-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Edit Dovecot Configuration</h3>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Configuration File</label>
+            <select id="config-file-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="/etc/dovecot/dovecot.conf">dovecot.conf</option>
+              <option value="/etc/dovecot/conf.d/10-mail.conf">10-mail.conf</option>
+              <option value="/etc/dovecot/conf.d/10-auth.conf">10-auth.conf</option>
+              <option value="/etc/dovecot/conf.d/10-ssl.conf">10-ssl.conf</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Configuration Content</label>
+            <textarea id="config-content" rows="20" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button onclick="hideConfigEditor()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg">
+              Cancel
+            </button>
+            <button onclick="saveDovecotConfig()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
+              Save & Reload
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let statusUpdateInterval;
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      refreshDovecotStatus();
+      startStatusUpdates();
+    });
+
+    function startStatusUpdates() {
+      statusUpdateInterval = setInterval(refreshDovecotStatus, 30000); // Update every 30 seconds
+    }
+
+    function stopStatusUpdates() {
+      if (statusUpdateInterval) {
+        clearInterval(statusUpdateInterval);
+      }
+    }
+
+    function refreshDovecotStatus() {
+      fetch('/mail/dovecot/status')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            updateStatusDisplay(data.status);
+          } else {
+            showError('Failed to get Dovecot status: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showError('Failed to get Dovecot status');
+        });
+    }
+
+    function updateStatusDisplay(status) {
+      const statusBadge = document.getElementById('dovecot-status-badge');
+      const serviceStatus = document.getElementById('service-status');
+      const processCount = document.getElementById('process-count');
+      const lastUpdated = document.getElementById('last-updated');
+
+      if (status.status === 'running') {
+        statusBadge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        statusBadge.textContent = 'Running';
+        serviceStatus.textContent = 'Active';
+        serviceStatus.className = 'text-2xl font-bold text-green-600 dark:text-green-400';
+      } else {
+        statusBadge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        statusBadge.textContent = 'Stopped';
+        serviceStatus.textContent = 'Inactive';
+        serviceStatus.className = 'text-2xl font-bold text-red-600 dark:text-red-400';
+      }
+
+      processCount.textContent = status.processes || '0';
+      lastUpdated.textContent = new Date().toLocaleTimeString();
+    }
+
+    function restartDovecot() {
+      if (confirm('Are you sure you want to restart the Dovecot service? This will disconnect all active users.')) {
+        fetch('/mail/dovecot/restart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showSuccess('Dovecot service restarted successfully');
+            setTimeout(refreshDovecotStatus, 2000);
+          } else {
+            showError('Failed to restart Dovecot: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showError('Failed to restart Dovecot service');
+        });
+      }
+    }
+
+    function reloadDovecot() {
+      if (confirm('Are you sure you want to reload the Dovecot configuration?')) {
+        fetch('/mail/dovecot/reload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showSuccess('Dovecot configuration reloaded successfully');
+          } else {
+            showError('Failed to reload Dovecot: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showError('Failed to reload Dovecot configuration');
+        });
+      }
+    }
+
+    function checkDovecotConfig() {
+      fetch('/mail/dovecot/check-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          if (data.result.valid) {
+            showSuccess('Dovecot configuration is valid');
+          } else {
+            showError('Dovecot configuration has errors: ' + data.result.message);
+          }
+        } else {
+          showError('Failed to check configuration: ' + data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showError('Failed to check Dovecot configuration');
+      });
+    }
+
+    function showDovecotLogs() {
+      fetch('/mail/dovecot/logs')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('logs-content').textContent = data.logs;
+            document.getElementById('logs-section').classList.remove('hidden');
+          } else {
+            showError('Failed to get logs: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showError('Failed to get Dovecot logs');
+        });
+    }
+
+    function hideLogs() {
+      document.getElementById('logs-section').classList.add('hidden');
+    }
+
+    function backupDovecotConfig() {
+      // Implementation for Dovecot config backup
+      showInfo('Dovecot configuration backup feature coming soon');
+    }
+
+    function showConfigEditor() {
+      // Implementation for config editor
+      showInfo('Dovecot configuration editor coming soon');
+    }
+
+    function hideConfigEditor() {
+      document.getElementById('config-modal').classList.add('hidden');
+    }
+
+    function saveDovecotConfig() {
+      // Implementation for saving config
+      showInfo('Dovecot configuration save feature coming soon');
+    }
+
+    function refreshUserInfo() {
+      // Implementation for refreshing user info
+      showInfo('User information refresh coming soon');
+    }
+
+    // Utility functions
+    function showSuccess(message) {
+      // Implementation for success notifications
+      alert('Success: ' + message);
+    }
+
+    function showError(message) {
+      // Implementation for error notifications
+      alert('Error: ' + message);
+    }
+
+    function showInfo(message) {
+      // Implementation for info notifications
+      alert('Info: ' + message);
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+      stopStatusUpdates();
+    });
+  </script>
+{% endblock %}

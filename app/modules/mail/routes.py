@@ -189,7 +189,13 @@ def postfix_queue():
     """Get Postfix queue information."""
     try:
         postfix_manager = PostfixManager()
-        queue_info = postfix_manager.get_queue_info()
+        
+        # Get query parameters
+        queue_type = request.args.get('queue', 'all')
+        limit = int(request.args.get('limit', 100))
+        
+        # Get detailed queue information
+        queue_info = postfix_manager.get_detailed_queue_info(queue_type, limit)
         
         return jsonify({
             'success': True,
@@ -197,6 +203,340 @@ def postfix_queue():
         })
     except Exception as e:
         logger.error(f"Error in postfix_queue: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/performance')
+@login_required
+def postfix_queue_performance():
+    """Get Postfix queue performance metrics."""
+    try:
+        postfix_manager = PostfixManager()
+        metrics = postfix_manager.get_queue_performance_metrics()
+        
+        return jsonify({
+            'success': True,
+            'metrics': metrics
+        })
+    except Exception as e:
+        logger.error(f"Error in postfix_queue_performance: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/message/<message_id>/delete', methods=['POST'])
+@login_required
+def postfix_delete_message(message_id):
+    """Delete a specific message from the queue."""
+    try:
+        logger.info(f"Message deletion requested by user {current_user.id}: {message_id}")
+        
+        postfix_manager = PostfixManager()
+        success = postfix_manager.delete_message(message_id)
+        
+        if success:
+            # Log the action
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='delete_queue_message',
+                    resource_type='postfix_queue',
+                    resource_id=message_id,
+                    details=f'Deleted message from queue: {message_id}',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Message {message_id} deleted successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Failed to delete message {message_id}'
+            }), 500
+    except Exception as e:
+        logger.error(f"Error in postfix_delete_message: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/message/<message_id>/hold', methods=['POST'])
+@login_required
+def postfix_hold_message(message_id):
+    """Hold a specific message in the queue."""
+    try:
+        logger.info(f"Message hold requested by user {current_user.id}: {message_id}")
+        
+        postfix_manager = PostfixManager()
+        success = postfix_manager.hold_message(message_id)
+        
+        if success:
+            # Log the action
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='hold_queue_message',
+                    resource_type='postfix_queue',
+                    resource_id=message_id,
+                    details=f'Held message in queue: {message_id}',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Message {message_id} held successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Failed to hold message {message_id}'
+            }), 500
+    except Exception as e:
+        logger.error(f"Error in postfix_hold_message: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/message/<message_id>/release', methods=['POST'])
+@login_required
+def postfix_release_message(message_id):
+    """Release a held message from the queue."""
+    try:
+        logger.info(f"Message release requested by user {current_user.id}: {message_id}")
+        
+        postfix_manager = PostfixManager()
+        success = postfix_manager.release_message(message_id)
+        
+        if success:
+            # Log the action
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='release_queue_message',
+                    resource_type='postfix_queue',
+                    resource_id=message_id,
+                    details=f'Released message from queue: {message_id}',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Message {message_id} released successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Failed to release message {message_id}'
+            }), 500
+    except Exception as e:
+        logger.error(f"Error in postfix_release_message: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/deferred/flush', methods=['POST'])
+@login_required
+def postfix_flush_deferred():
+    """Flush the deferred queue."""
+    try:
+        logger.info(f"Deferred queue flush requested by user {current_user.id}")
+        
+        postfix_manager = PostfixManager()
+        success = postfix_manager.flush_deferred_queue()
+        
+        if success:
+            # Log the action
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='flush_deferred_queue',
+                    resource_type='postfix_queue',
+                    resource_id='deferred',
+                    details='Flushed deferred queue',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Deferred queue flushed successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to flush deferred queue'
+            }), 500
+    except Exception as e:
+        logger.error(f"Error in postfix_flush_deferred: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/hold/flush', methods=['POST'])
+@login_required
+def postfix_flush_hold():
+    """Flush the hold queue."""
+    try:
+        logger.info(f"Hold queue flush requested by user {current_user.id}")
+        
+        postfix_manager = PostfixManager()
+        success = postfix_manager.flush_hold_queue()
+        
+        if success:
+            # Log the action
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='flush_hold_queue',
+                    resource_type='postfix_queue',
+                    resource_id='hold',
+                    details='Flushed hold queue',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Hold queue flushed successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to flush hold queue'
+            }), 500
+    except Exception as e:
+        logger.error(f"Error in postfix_flush_hold: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/cleanup', methods=['POST'])
+@login_required
+def postfix_cleanup_queue():
+    """Clean up expired messages from the queue."""
+    try:
+        logger.info(f"Queue cleanup requested by user {current_user.id}")
+        
+        postfix_manager = PostfixManager()
+        success = postfix_manager.cleanup_expired_messages()
+        
+        if success:
+            # Log the action
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='cleanup_queue',
+                    resource_type='postfix_queue',
+                    resource_id='cleanup',
+                    details='Cleaned up expired messages from queue',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Queue cleanup completed successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to cleanup queue'
+            }), 500
+    except Exception as e:
+        logger.error(f"Error in postfix_cleanup_queue: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/rebuild', methods=['POST'])
+@login_required
+def postfix_rebuild_queue():
+    """Rebuild the queue index."""
+    try:
+        logger.info(f"Queue rebuild requested by user {current_user.id}")
+        
+        postfix_manager = PostfixManager()
+        success = postfix_manager.rebuild_queue_index()
+        
+        if success:
+            # Log the action
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='rebuild_queue',
+                    resource_type='postfix_queue',
+                    resource_id='rebuild',
+                    details='Rebuilt queue index',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Queue index rebuilt successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to rebuild queue index'
+            }), 500
+    except Exception as e:
+        logger.error(f"Error in postfix_rebuild_queue: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/postfix/queue/integrity', methods=['POST'])
+@login_required
+def postfix_check_queue_integrity():
+    """Check queue integrity."""
+    try:
+        logger.info(f"Queue integrity check requested by user {current_user.id}")
+        
+        postfix_manager = PostfixManager()
+        result = postfix_manager.check_queue_integrity()
+        
+        return jsonify({
+            'success': True,
+            'result': result
+        })
+    except Exception as e:
+        logger.error(f"Error in postfix_check_queue_integrity: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
@@ -726,6 +1066,106 @@ def dovecot_logs():
         })
     except Exception as e:
         logger.error(f"Error in dovecot_logs: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/dovecot/config/info')
+@login_required
+def dovecot_config_info():
+    """Get Dovecot configuration information."""
+    try:
+        dovecot_manager = DovecotManager()
+        config_info = dovecot_manager.get_config_info()
+        
+        return jsonify({
+            'success': True,
+            'config': config_info
+        })
+    except Exception as e:
+        logger.error(f"Error in dovecot_config_info: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/dovecot/config/backup', methods=['POST'])
+@login_required
+def dovecot_backup_config():
+    """Create a backup of Dovecot configuration."""
+    try:
+        logger.info(f"Dovecot config backup requested by user {current_user.id}")
+        
+        dovecot_manager = DovecotManager()
+        result = dovecot_manager.backup_config()
+        
+        if result.get('success'):
+            # Log the action
+            try:
+                audit_log = AuditLog(
+                    user_id=current_user.id,
+                    action='backup_dovecot_config',
+                    resource_type='dovecot_config',
+                    resource_id='backup',
+                    details=f'Created Dovecot configuration backup: {result.get("backup_file")}',
+                    ip_address=request.remote_addr
+                )
+                db.session.add(audit_log)
+                db.session.commit()
+            except Exception as db_error:
+                logger.error(f"Failed to create audit log: {db_error}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Configuration backup created successfully',
+                'backup_file': result.get('backup_file')
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': result.get('error', 'Failed to create backup')
+            }), 500
+    except Exception as e:
+        logger.error(f"Error in dovecot_backup_config: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/dovecot/users/statistics')
+@login_required
+def dovecot_user_statistics():
+    """Get Dovecot user statistics."""
+    try:
+        dovecot_manager = DovecotManager()
+        stats = dovecot_manager.get_user_statistics()
+        
+        return jsonify({
+            'success': True,
+            'statistics': stats
+        })
+    except Exception as e:
+        logger.error(f"Error in dovecot_user_statistics: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@bp.route('/dovecot/protocols/status')
+@login_required
+def dovecot_protocol_status():
+    """Get Dovecot protocol status."""
+    try:
+        dovecot_manager = DovecotManager()
+        status = dovecot_manager.get_protocol_status()
+        
+        return jsonify({
+            'success': True,
+            'protocols': status
+        })
+    except Exception as e:
+        logger.error(f"Error in dovecot_protocol_status: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
