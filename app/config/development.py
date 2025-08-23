@@ -5,6 +5,7 @@ Safe to commit to version control
 
 import os
 from pathlib import Path
+from . import get_database_config, get_migration_config
 
 class DevelopmentConfig:
     """Development configuration."""
@@ -14,10 +15,16 @@ class DevelopmentConfig:
     DEBUG = True
     TESTING = False
     
-    # Database
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + str(Path(__file__).parent.parent.parent / 'instance' / 'postfix_manager.db')
+    # Database configuration
+    db_config = get_database_config()
+    SQLALCHEMY_DATABASE_URI = db_config['SQLALCHEMY_DATABASE_URI']
+    SQLALCHEMY_ENGINE_OPTIONS = db_config['SQLALCHEMY_ENGINE_OPTIONS']
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Migration configuration
+    migration_config = get_migration_config()
+    MIGRATION_DIR = migration_config['MIGRATION_DIR']
+    DB_TYPE = migration_config['DB_TYPE']
     
     # Security
     WTF_CSRF_ENABLED = True
