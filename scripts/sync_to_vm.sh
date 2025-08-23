@@ -103,6 +103,7 @@ ssh "${VM_USER}@${VM_HOST}" "cd ${VM_APP_DIR} && \
     find . -type f -not -path './venv/*' -exec chmod 644 {} \; && \
     echo 'Setting executable permissions for scripts...' && \
     chmod +x scripts/*.sh scripts/*.py && \
+    chmod +x run.py && \
     echo 'Setting special permissions for data directories...' && \
     chmod 700 app/data/db app/data/sessions 2>/dev/null || true && \
     chmod 755 app/data/logs app/data/cache app/data/backups app/data/archive app/data/seeds 2>/dev/null || true && \
