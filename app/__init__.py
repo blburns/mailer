@@ -13,49 +13,18 @@ def create_app() -> Flask:
     app.url_map.strict_slashes = False
 
     with app.app_context():
-        # Import and initialize everything
-        from app.extensions import (
-            init_config, init_data_directories, init_mail_config, init_ldap_config,
-            init_csrf_config, init_session_config, init_logging_config,
-            init_extensions, init_user_loader, init_template_context,
-            register_blueprints, init_error_handlers
-        )
+        # Import and initialize everything using consolidated extension system
+        from app.extensions import init_extensions
         
-        # Initialize configuration first
-        init_config(app)
-        
-        # Initialize data directories
-        init_data_directories(app)
-        
-        # Initialize specific configurations
-        init_mail_config(app)
-        init_ldap_config(app)
-        init_csrf_config(app)
-        init_session_config(app)
-        init_logging_config(app)
-        
-        # Initialize Flask extensions
+        # Initialize all extensions in the correct order
         init_extensions(app)
-        
-        # Initialize user loader for Flask-Login
-        init_user_loader(app)
-        
-        # Initialize template context
-        init_template_context(app)
-        
-        # Register blueprints
-        register_blueprints(app)
-        
-        # Initialize error handlers
-        init_error_handlers(app)
 
     return app
 
 
-# Create the application instance for WSGI/CLI
-app = create_app()
-
 if __name__ == '__main__':
+    # Create the application instance for CLI
+    app = create_app()
     app.run(
         debug=os.getenv('FLASK_DEBUG', 'False') == 'True',
         host=os.getenv('FLASK_RUN_HOST', '127.0.0.1'),
