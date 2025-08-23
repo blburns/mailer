@@ -307,11 +307,31 @@ python scripts/init_vm_db.py
 # Create admin user
 python scripts/create_admin.py
 
+# Seed test data (now properly loads .env files)
+python scripts/seed_test_data.py --verbose --count 10
+
 # Manage migrations
 python scripts/migrate_all.py upgrade postgresql
 python scripts/migrate_all.py current all
 python scripts/migrate_all.py history all
 ```
+
+### Test Data Seeding
+
+The `seed_test_data.py` script now properly loads environment variables from `.env` files:
+
+```bash
+# Basic seeding
+python scripts/seed_test_data.py
+
+# Verbose output with custom count
+python scripts/seed_test_data.py --verbose --count 20
+
+# Clear existing data before seeding
+python scripts/seed_test_data.py --clear --count 15
+```
+
+**Note**: The script automatically detects your database type from `.env` files and connects to the appropriate database.
 
 ## Best Practices
 

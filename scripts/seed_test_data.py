@@ -33,10 +33,45 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # Also add the app directory specifically
 sys.path.insert(0, str(PROJECT_ROOT / 'app'))
 
-# Set environment variables for development
-os.environ['FLASK_ENV'] = 'development'
-os.environ['FLASK_APP'] = 'app'
-os.environ['ENV'] = 'development'
+# Load environment variables from .env files (same as main app)
+try:
+    from dotenv import load_dotenv
+    
+    # Load environment layers (same as app/extensions/config.py)
+    # Base
+    load_dotenv(PROJECT_ROOT / '.env')
+    
+    # Local overrides (gitignored)
+    load_dotenv(PROJECT_ROOT / '.env.local')
+    
+    # Mode-specific
+    mode = os.environ.get('FLASK_ENV') or os.environ.get('ENV') or 'development'
+    load_dotenv(PROJECT_ROOT / f'.env.{mode}')
+    
+    # VM-specific (for production deployments)
+    load_dotenv(PROJECT_ROOT / '.env.vm')
+    
+    # Production system config (highest precedence)
+    try:
+        if (Path('/etc/postfix-manager') / 'app.conf').exists():
+            load_dotenv('/etc/postfix-manager/app.conf', override=True)
+    except Exception:
+        pass
+        
+    print(f"✅ Environment loaded from .env files")
+    print(f"   DB_TYPE: {os.environ.get('DB_TYPE', 'Not set')}")
+    print(f"   FLASK_ENV: {os.environ.get('FLASK_ENV', 'Not set')}")
+    
+except ImportError:
+    print("⚠️  python-dotenv not available, using system environment only")
+
+# Set default environment variables if not already set
+if not os.environ.get('FLASK_ENV'):
+    os.environ['FLASK_ENV'] = 'development'
+if not os.environ.get('FLASK_APP'):
+    os.environ['FLASK_APP'] = 'run.py'
+if not os.environ.get('ENV'):
+    os.environ['ENV'] = 'development'
 
 try:
     from app import create_app
@@ -509,11 +544,19 @@ def main():
             try:
                 # Test if we can access the database
                 from sqlalchemy import text
-                db.session.execute(text("SELECT 1"))
+                result = db.session.execute(text("SELECT 1"))
                 print("✅ Database connection successful")
+                
+                # Show database information
+                from app.extensions.database import DbConfig
+                db_config = DbConfig()
+                print(f"   Database Type: {db_config.db_type}")
+                print(f"   Database URI: {db_config.db_uri}")
+                
             except Exception as db_error:
                 print(f"❌ Database connection failed: {db_error}")
                 print("Please ensure the database is properly configured and accessible.")
+                print("Check your .env.vm file and database service status.")
                 sys.exit(1)
         
         # Create seeder
