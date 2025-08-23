@@ -45,7 +45,7 @@ def get_db_type():
 def get_migration_dir():
     """Get migration directory based on database type."""
     db_type = get_db_type()
-    return f'migrations/{db_type}'
+    return f'app/data/migrations/{db_type}'
 
 def run_command(cmd, cwd=None):
     """Run a shell command and return the result."""

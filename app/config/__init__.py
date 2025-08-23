@@ -37,13 +37,14 @@ def get_database_config():
         }
     
     else:  # sqlite (default)
-        # Use a more reliable path that works on both local and VM
+        # Use the new app/data/db structure
         if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('ENV') == 'production':
             # Production/VM path
-            db_path = '/opt/postfix-manager/instance/postfix_manager.db'
+            db_path = '/opt/postfix-manager/app/data/db/postfix_manager.db'
         else:
-            # Development path
-            db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'instance', 'postfix_manager.db')
+            # Development path - use app/data/db
+            app_root = Path(__file__).parent.parent
+            db_path = app_root / 'data' / 'db' / 'postfix_manager.db'
         
         # Ensure the directory exists
         os.makedirs(os.path.dirname(db_path), exist_ok=True)

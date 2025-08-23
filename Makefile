@@ -225,6 +225,56 @@ db-switch:
 	@echo "Set DB_TYPE environment variable to switch databases"
 	@echo "Example: DB_TYPE=mysql make db-init"
 
+# Multi-database migration management
+migrate-check:
+	@echo "🔍 Checking migration environment..."
+	@python3 scripts/migrate_all.py check
+
+migrate-generate:
+	@if [ -z "$(MSG)" ]; then \
+		echo "❌ Migration message required. Use: make migrate-generate MSG='Your message'"; \
+		exit 1; \
+	fi
+	@echo "🚀 Generating migrations for all database types..."
+	@python3 scripts/migrate_all.py generate -m "$(MSG)"
+
+migrate-upgrade:
+	@echo "🔄 Upgrading all databases to latest migration..."
+	@python3 scripts/migrate_all.py upgrade all
+
+migrate-upgrade-sqlite:
+	@echo "🔄 Upgrading SQLite database..."
+	@python3 scripts/migrate_all.py upgrade sqlite
+
+migrate-upgrade-mysql:
+	@echo "🔄 Upgrading MySQL/MariaDB database..."
+	@python3 scripts/migrate_all.py upgrade mysql
+
+migrate-upgrade-pg:
+	@echo "🔄 Upgrading PostgreSQL database..."
+	@python3 scripts/migrate_all.py upgrade postgresql
+
+migrate-current:
+	@echo "📊 Current migration versions:"
+	@python3 scripts/migrate_all.py current all
+
+migrate-history:
+	@echo "📚 Migration history for all databases:"
+	@python3 scripts/migrate_all.py history all
+
+# Quick development setup
+dev-setup: dev-install db-init-sqlite migrate-upgrade-sqlite
+	@echo "✅ Development environment setup complete!"
+	@echo "🚀 Run 'make run' to start the development server"
+
+# Production setup
+prod-setup: install migrate-check
+	@echo "✅ Production environment setup complete!"
+	@echo "📋 Next steps:"
+	@echo "   1. Configure your .env file with database credentials"
+	@echo "   2. Run: make migrate-upgrade-[your-db-type]"
+	@echo "   3. Create admin user: python3 scripts/create_admin.py"
+
 # Create admin user
 create-admin:
 	@echo "Creating admin user..."

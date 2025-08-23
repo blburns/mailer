@@ -1,5 +1,5 @@
 """
-Alembic environment configuration for SQLite database.
+Alembic environment configuration for PostgreSQL database.
 """
 
 from logging.config import fileConfig
@@ -10,7 +10,7 @@ import os
 import sys
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 # Import the Flask app and models
 from app import create_app

@@ -86,8 +86,8 @@ echo -e "${GREEN}✅ Dependencies installed${NC}"
 
 # Create necessary directories
 echo -e "${YELLOW}📁 Creating necessary directories...${NC}"
-mkdir -p instance logs data/backups data/cache
-echo -e "${GREEN}✅ Directories created${NC}"
+mkdir -p app/data/{logs,db,backups,cache,archive,seeds,sessions}
+echo -e "${GREEN}✅ Directories created in app/data/${NC}"
 
 # Initialize database
 echo -e "${YELLOW}🗄️  Initializing database...${NC}"

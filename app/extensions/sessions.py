@@ -44,7 +44,8 @@ class DataDirectoryManager:
 
 def init_data_directories(app):
     """Initialize all application data directories"""
-    app_root = Path(app.root_path).parent
+    # Use the app directory itself, not its parent
+    app_root = Path(app.root_path)
     manager = DataDirectoryManager(app_root)
     manager.ensure_directories()
     app.config['DATA_MANAGER'] = manager
@@ -56,7 +57,8 @@ def init_data_directories(app):
 def init_session_config(app):
     """Initialize session configuration"""
     app.config['SESSION_TYPE'] = os.getenv('SESSION_TYPE', 'filesystem')
-    app.config['SESSION_FILE_DIR'] = os.getenv('SESSION_FILE_DIR', str(Path(app.root_path).parent / 'data' / 'sessions'))
+    # Use app/data/sessions instead of project root
+    app.config['SESSION_FILE_DIR'] = os.getenv('SESSION_FILE_DIR', str(Path(app.root_path) / 'data' / 'sessions'))
     app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
     app.config['SESSION_COOKIE_HTTPONLY'] = os.getenv('SESSION_COOKIE_HTTPONLY', 'True').lower() == 'true'
     app.config['SESSION_COOKIE_SAMESITE'] = os.getenv('SESSION_COOKIE_SAMESITE', 'Lax')
