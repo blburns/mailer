@@ -362,7 +362,7 @@ deploy-vm:
 	@./scripts/deploy_to_vm.sh
 
 sync-vm:
-	@echo "Syncing code changes to VM..."
+	@echo "Syncing code changes to VM and setting proper permissions..."
 	@chmod +x scripts/sync_to_vm.sh
 	@./scripts/sync_to_vm.sh
 
