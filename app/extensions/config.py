@@ -9,7 +9,7 @@ from pathlib import Path
 from .database import DbConfig
 
 def _load_env_layers():
-    """Load .env, .env.local, and .env.<mode> plus system app.conf"""
+    """Load .env, .env.local, .env.<mode> plus system app.conf"""
     project_root = Path(__file__).parent.parent.parent
     
     # Base
@@ -21,6 +21,9 @@ def _load_env_layers():
     # Mode-specific
     mode = os.environ.get('FLASK_ENV') or os.environ.get('ENV') or 'development'
     load_dotenv(project_root / f'.env.{mode}')
+    
+    # VM-specific (for production deployments)
+    load_dotenv(project_root / '.env.vm')
     
     # Production system config (highest precedence)
     try:

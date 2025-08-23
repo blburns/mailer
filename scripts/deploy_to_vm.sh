@@ -122,6 +122,18 @@ rsync -avz --delete \
 
 echo -e "${GREEN}✅ Code synced successfully${NC}"
 
+# Create VM environment file if it doesn't exist
+echo -e "${YELLOW}🔧 Setting up VM environment configuration...${NC}"
+ssh "${VM_USER}@${VM_HOST}" "cd ${VM_APP_DIR} && \
+    if [ ! -f .env.vm ]; then \
+        echo 'Creating .env.vm from template...' && \
+        cp env.vm.example .env.vm && \
+        echo '✅ .env.vm created successfully' && \
+        echo '⚠️  Please review and modify .env.vm with your actual database credentials'; \
+    else \
+        echo '✅ .env.vm already exists'; \
+    fi"
+
 # Set up Python environment on VM
 echo -e "${YELLOW}🐍 Setting up Python environment on VM...${NC}"
 ssh "${VM_USER}@${VM_HOST}" "cd ${VM_APP_DIR} && \
@@ -139,21 +151,7 @@ echo -e "${YELLOW}📁 Creating necessary directories on VM...${NC}"
 ssh "${VM_USER}@${VM_HOST}" "cd ${VM_APP_DIR} && \
     mkdir -p app/data/{logs,db,backups,cache,archive,seeds,sessions}"
 
-# Set up environment file on VM
-echo -e "${YELLOW}⚙️  Setting up environment configuration on VM...${NC}"
-ssh "${VM_USER}@${VM_HOST}" "cd ${VM_APP_DIR} && \
-    if [ ! -f '.env' ]; then \
-        cp env.conf.example .env; \
-        echo 'VM_HOST=${VM_HOST}' >> .env; \
-        echo 'VM_USER=${VM_USER}' >> .env; \
-        echo 'VM_APP_DIR=${VM_APP_DIR}' >> .env; \
-        echo 'FLASK_ENV=production' >> .env; \
-        echo 'DEBUG=False' >> .env; \
-    fi"
-
-echo -e "${GREEN}✅ Environment configured${NC}"
-
-# Initialize database on VM
+# Initialize the database
 echo -e "${YELLOW}🗄️  Initializing database on VM...${NC}"
 ssh "${VM_USER}@${VM_HOST}" "cd ${VM_APP_DIR} && \
     source venv/bin/activate && \
@@ -168,16 +166,18 @@ ssh "${VM_USER}@${VM_HOST}" "cd ${VM_APP_DIR} && \
     chown -R ${DEPLOY_USER}:${DEPLOY_GROUP} . && \
     echo 'Setting directory permissions...' && \
     find . -type d -exec chmod 755 {} \; && \
-    echo 'Setting file permissions...' && \
-    find . -type f -exec chmod 644 {} \; && \
+    echo 'Setting file permissions (excluding venv)...' && \
+    find . -type f -not -path './venv/*' -exec chmod 644 {} \; && \
     echo 'Setting executable permissions for scripts...' && \
     chmod +x scripts/*.sh scripts/*.py && \
     echo 'Setting special permissions for data directories...' && \
     chmod 700 app/data/db app/data/sessions 2>/dev/null || true && \
     chmod 755 app/data/logs app/data/cache app/data/backups app/data/archive app/data/seeds 2>/dev/null || true && \
-    echo 'Fixing virtual environment permissions...' && \
+    echo 'Setting virtual environment permissions...' && \
     chmod +x venv/bin/* && \
     chmod 755 venv/bin && \
+    chmod 755 venv/lib && \
+    chmod 755 venv/include && \
     chmod 644 venv/bin/*.py 2>/dev/null || true && \
     echo 'Permissions set successfully'"
 
