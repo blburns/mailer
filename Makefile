@@ -16,6 +16,8 @@ help:
 	@echo "  lint           Run linting checks"
 	@echo "  format         Format code with Black"
 	@echo "  clean          Clean up temporary files"
+	@echo "  clean-pycache  Advanced Python cache cleanup"
+	@echo "  fix-permissions Fix file and directory permissions"
 	@echo ""
 	@echo "Installation:"
 	@echo "  install-debian Install on Debian/Ubuntu systems"
@@ -29,6 +31,17 @@ help:
 	@echo "  db-migrate     Run database migrations"
 	@echo "  db-upgrade     Upgrade database schema"
 	@echo "  db-downgrade   Downgrade database schema"
+	@echo ""
+	@echo "VM Operations:"
+	@echo "  deploy-vm      Deploy to Ubuntu VM"
+	@echo "  sync-vm        Quick sync to VM"
+	@echo "  vm-config      Show VM configuration"
+	@echo "  vm-deps        Install VM dependencies"
+	@echo "  vm-fix-deps    Fix VM dependencies (python-ldap)"
+	@echo "  vm-troubleshoot Troubleshoot VM database issues"
+	@echo "  vm-status      Check VM connectivity"
+	@echo "  vm-run         Start app on VM"
+	@echo "  vm-logs        View VM logs"
 
 # Install production dependencies
 install:
@@ -82,6 +95,17 @@ clean:
 	find . -type d -name "htmlcov" -exec rm -rf {} +
 	rm -rf build/ dist/ *.egg-info/
 
+# Advanced cleanup and maintenance
+clean-pycache:
+	@echo "Cleaning Python cache and temporary files..."
+	@chmod +x scripts/clean_pycache.sh
+	@./scripts/clean_pycache.sh
+
+fix-permissions:
+	@echo "Fixing file and directory permissions..."
+	@chmod +x scripts/fix_permissions.sh
+	@./scripts/fix_permissions.sh
+
 # Install on Debian/Ubuntu systems
 install-debian:
 	@echo "Installing on Debian/Ubuntu system..."
@@ -89,8 +113,8 @@ install-debian:
 		echo "Error: This command must be run as root (use sudo)"; \
 		exit 1; \
 	fi
-	chmod +x installers/debian_install.sh
-	./installers/debian_install.sh
+	@chmod +x installers/debian_install.sh
+	@./installers/debian_install.sh
 
 # Install on RedHat/CentOS systems
 install-redhat:
@@ -99,8 +123,8 @@ install-redhat:
 		echo "Error: This command must be run as root (use sudo)"; \
 		exit 1; \
 	fi
-	chmod +x installers/redhat_install.sh
-	./installers/redhat_install.sh
+	@chmod +x installers/redhat_install.sh
+	@./installers/redhat_install.sh
 
 # Build distribution package
 build-package:
@@ -111,9 +135,9 @@ build-package:
 db-init:
 	@echo "Initializing database..."
 	@if [ -f "venv/bin/python" ]; then \
-		venv/bin/python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.create_all(); print('Database initialized successfully')"; \
+		venv/bin/python scripts/init_db.py; \
 	else \
-		python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.create_all(); print('Database initialized successfully')"; \
+		python scripts/init_db.py; \
 	fi
 
 # Run database migrations
@@ -220,5 +244,81 @@ status:
 	@echo "Python: $$(python3 --version 2>/dev/null || echo 'Not found')"
 	@echo "Flask: $$(python3 -c 'import flask; print(flask.__version__)' 2>/dev/null || echo 'Not found')"
 	@echo "Database: $$(if [ -f "postfix_manager.db" ]; then echo "Found"; else echo "Not found"; fi)"
-	@echo "Virtual Environment: $$(if [ -d "venv" ]; then echo "Active"; else echo "Not active"; fi)"
+	@echo "Virtual Environment: $$(if [ -d "venv" ]; then echo "Active"; else echo "Not active'; fi)"
 	@echo "Requirements: $$(if [ -f "requirements.txt" ]; then echo "Installed"; else echo "Not installed"; fi)"
+
+# VM Development Operations
+deploy-vm:
+	@echo "Deploying to Ubuntu VM..."
+	@chmod +x scripts/deploy_to_vm.sh
+	@./scripts/deploy_to_vm.sh
+
+sync-vm:
+	@echo "Syncing code changes to VM..."
+	@chmod +x scripts/sync_to_vm.sh
+	@./scripts/sync_to_vm.sh
+
+# VM Configuration (hardcoded for now)
+VM_HOST ?= 192.168.1.15
+VM_USER ?= root
+VM_APP_DIR ?= /opt/postfix-manager
+
+# Show VM configuration
+vm-config:
+	@echo "📋 VM Configuration:"
+	@echo "VM_HOST: $(VM_HOST)"
+	@echo "VM_USER: $(VM_USER)"
+	@echo "VM_APP_DIR: $(VM_APP_DIR)"
+
+# VM Dependency Management
+vm-deps:
+	@echo "Installing VM dependencies..."
+	@chmod +x scripts/install_vm_dependencies.sh
+	@./scripts/install_vm_dependencies.sh
+
+vm-fix-deps:
+	@echo "Fixing VM dependencies (python-ldap issue)..."
+	@chmod +x scripts/fix_vm_dependencies.sh
+	@./scripts/fix_vm_dependencies.sh
+
+vm-troubleshoot:
+	@echo "Troubleshooting VM database issues..."
+	@chmod +x scripts/troubleshoot_vm_db.sh
+	@./scripts/troubleshoot_vm_db.sh
+
+vm-status:
+	@echo "Checking VM status..."
+	@chmod +x scripts/sync_to_vm.sh
+	@./scripts/sync_to_vm.sh
+	@if [ -n "$(VM_HOST)" ]; then \
+		echo "VM Host: $(VM_HOST)"; \
+		echo "VM User: $(VM_USER)"; \
+		echo "VM App Dir: $(VM_APP_DIR)"; \
+		ssh -o ConnectTimeout=5 "$(VM_USER)@$(VM_HOST)" "cd $(VM_APP_DIR) && echo 'VM accessible' && ls -la" 2>/dev/null || echo "VM not accessible"; \
+	else \
+		echo "VM_HOST environment variable not set"; \
+		echo "Please check your .env file or run: make vm-troubleshoot"; \
+	fi
+
+vm-run:
+	@echo "Starting app on VM..."
+	@chmod +x scripts/sync_to_vm.sh
+	@./scripts/sync_to_vm.sh
+	@if [ -n "$(VM_HOST)" ]; then \
+		ssh "$(VM_USER)@$(VM_HOST)" "cd $(VM_APP_DIR) && source venv/bin/activate && python run.py &"; \
+		echo "App started on VM at http://$(VM_HOST):5000"; \
+	else \
+		echo "VM_HOST environment variable not set"; \
+		echo "Please check your .env file or run: make vm-troubleshoot"; \
+	fi
+
+vm-logs:
+	@echo "Showing VM logs..."
+	@chmod +x scripts/sync_to_vm.sh
+	@./scripts/sync_to_vm.sh
+	@if [ -n "$(VM_HOST)" ]; then \
+		ssh "$(VM_USER)@$(VM_HOST)" "cd $(VM_APP_DIR) && tail -f logs/postfix-manager.log"; \
+	else \
+		echo "VM_HOST environment variable not set"; \
+		echo "Please check your .env file or run: make vm-troubleshoot"; \
+	fi

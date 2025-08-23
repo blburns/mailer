@@ -18,6 +18,21 @@ import argparse
 import subprocess
 from pathlib import Path
 
+# Load environment variables early
+try:
+    from dotenv import load_dotenv
+    # Load .env file from the project root
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"📋 Loaded environment from: {env_path}")
+    else:
+        print(f"⚠️  .env file not found at: {env_path}")
+except ImportError:
+    print("⚠️  python-dotenv not available, using system environment only")
+except Exception as e:
+    print(f"⚠️  Error loading .env file: {e}")
+
 def run_web_app(port=5000, host='0.0.0.0', mode='development'):
     """Run the Postfix Manager web application"""
     app_dir = Path(__file__).parent / 'app'
