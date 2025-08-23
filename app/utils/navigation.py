@@ -100,7 +100,7 @@ def is_active_module(module_name: str) -> bool:
 
 
 # Common breadcrumb patterns
-def set_mail_breadcrumbs(subsection: str = None):
+def set_mail_breadcrumbs(subsection: str = None, current_path: str = None):
     """Set breadcrumbs for mail management pages."""
     breadcrumbs = [
         {'text': 'Mail Management', 'url': '/mail'}
@@ -109,14 +109,14 @@ def set_mail_breadcrumbs(subsection: str = None):
     if subsection:
         breadcrumbs.append({
             'text': subsection,
-            'url': request.path,
+            'url': current_path or '/mail',
             'active': True
         })
     
     set_breadcrumbs(breadcrumbs)
 
 
-def set_dashboard_breadcrumbs(subsection: str = None):
+def set_dashboard_breadcrumbs(subsection: str = None, current_path: str = None):
     """Set breadcrumbs for dashboard pages."""
     breadcrumbs = [
         {'text': 'Dashboard', 'url': '/dashboard'}
@@ -125,14 +125,14 @@ def set_dashboard_breadcrumbs(subsection: str = None):
     if subsection:
         breadcrumbs.append({
             'text': subsection,
-            'url': request.path,
+            'url': current_path or '/dashboard',
             'active': True
         })
     
     set_breadcrumbs(breadcrumbs)
 
 
-def set_ldap_breadcrumbs(subsection: str = None):
+def set_ldap_breadcrumbs(subsection: str = None, current_path: str = None):
     """Set breadcrumbs for LDAP pages."""
     breadcrumbs = [
         {'text': 'LDAP Management', 'url': '/ldap'}
@@ -141,14 +141,14 @@ def set_ldap_breadcrumbs(subsection: str = None):
     if subsection:
         breadcrumbs.append({
             'text': subsection,
-            'url': request.path,
+            'url': current_path or '/ldap',
             'active': True
         })
     
     set_breadcrumbs(breadcrumbs)
 
 
-def set_system_breadcrumbs(subsection: str = None):
+def set_system_breadcrumbs(subsection: str = None, current_path: str = None):
     """Set breadcrumbs for system pages."""
     breadcrumbs = [
         {'text': 'System', 'url': '/system'}
@@ -157,7 +157,7 @@ def set_system_breadcrumbs(subsection: str = None):
     if subsection:
         breadcrumbs.append({
             'text': subsection,
-            'url': request.path,
+            'url': current_path or '/system',
             'active': True
         })
     

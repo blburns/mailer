@@ -29,6 +29,7 @@ def index():
 @login_required
 def postfix():
     """Postfix management."""
+    set_mail_breadcrumbs('Postfix', request.path)
     return render_template('modules/mail/postfix.html', title='Postfix Management')
 
 
@@ -36,6 +37,7 @@ def postfix():
 @login_required
 def postfix_management():
     """Postfix management page."""
+    set_mail_breadcrumbs('Postfix Management', request.path)
     return render_template('modules/mail/postfix.html', title='Postfix Management')
 
 
@@ -43,6 +45,7 @@ def postfix_management():
 @login_required
 def dovecot():
     """Dovecot management."""
+    set_mail_breadcrumbs('Dovecot', request.path)
     return render_template('modules/mail/dovecot.html', title='Dovecot Management')
 
 
@@ -50,6 +53,7 @@ def dovecot():
 @login_required
 def dovecot_management():
     """Dovecot management page."""
+    set_mail_breadcrumbs('Dovecot Management', request.path)
     return render_template('modules/mail/dovecot.html', title='Dovecot Management')
 
 

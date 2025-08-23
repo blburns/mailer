@@ -11,6 +11,64 @@ This guide covers all aspects of database management for Postfix Manager, includ
 - [Troubleshooting](#troubleshooting)
 - [Make Commands](#make-commands)
 - [Manual Commands](#manual-commands)
+- [Recent Improvements](#recent-improvements)
+
+## Recent Improvements
+
+### Breadcrumb Navigation System
+
+Postfix Manager now features an intelligent breadcrumb navigation system that provides:
+
+- **Automatic Path-based Breadcrumbs**: Automatically generates breadcrumbs from URL paths
+- **Programmatic Breadcrumbs**: Routes can set custom breadcrumbs for better user experience
+- **Module-specific Breadcrumbs**: Each module (Mail, Dashboard, LDAP) has tailored breadcrumb patterns
+- **Fallback System**: Seamlessly falls back to automatic breadcrumbs when custom ones aren't set
+
+#### Breadcrumb Usage in Routes
+
+```python
+from app.utils.navigation import set_mail_breadcrumbs, set_dashboard_breadcrumbs
+
+# Set breadcrumbs for mail management
+@bp.route('/postfix')
+@login_required
+def postfix():
+    set_mail_breadcrumbs('Postfix', request.path)
+    return render_template('modules/mail/postfix.html')
+
+# Set breadcrumbs for dashboard
+@bp.route('/domains')
+@login_required
+def domains():
+    set_dashboard_breadcrumbs('Domains', request.path)
+    return render_template('modules/dashboard/domains.html')
+```
+
+### Enhanced Login Experience
+
+The login page now features:
+
+- **Minimal Navbar**: Clean, unobtrusive navbar with app branding
+- **Theme Toggle**: Dark/light mode switch accessible before login
+- **Seamless Integration**: Navbar blends with page background, no borders or background colors
+- **Responsive Design**: Works perfectly on all device sizes
+
+### Database Seeding Improvements
+
+The database seeding system has been enhanced with:
+
+- **Intelligent Duplicate Detection**: Won't fail on re-runs
+- **Multi-database Support**: Works with SQLite, MySQL/MariaDB, and PostgreSQL
+- **Better Error Handling**: Clear feedback and graceful fallbacks
+- **Test Data Management**: Easy creation and management of test data
+
+```bash
+# Seed database with test data
+DB_TYPE=postgresql make db-seed
+
+# Or run directly
+python3 scripts/manage_db.py seed
+```
 
 ## Database Types
 

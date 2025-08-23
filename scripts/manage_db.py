@@ -184,45 +184,79 @@ def seed_database():
     app = create_app()
     with app.app_context():
         try:
-            # Create admin user
-            from app.utils.auth_utils import hash_password
-            admin_user = User(
-                username='admin',
-                email='admin@example.com',
-                password_hash=hash_password('admin123'),
-                role='ADMIN',
-                is_active=True
-            )
-            db.session.add(admin_user)
+            # Check if data already exists
+            existing_admin = User.query.filter_by(username='admin').first()
+            existing_domain = MailDomain.query.filter_by(domain='example.com').first()
+            existing_config = SystemConfig.query.filter_by(key='mail_server_name').first()
             
-            # Create test domain
-            test_domain = MailDomain(
-                domain='example.com',
-                ldap_base_dn='dc=example,dc=com',
-                is_active=True
-            )
-            db.session.add(test_domain)
+            if existing_admin and existing_domain and existing_config:
+                print("ℹ️  Test data already exists in database")
+                print("   - Admin user: admin/admin123")
+                print("   - Test domain: example.com")
+                print("   - Test mail user: testuser/testpass123")
+                print("   - System config: mail_server_name")
+                return
             
-            # Create test mail user
-            test_mail_user = MailUser(
-                username='testuser',
-                domain_id=1,
-                email='testuser@example.com',
-                quota_mb=100,
-                is_active=True
-            )
-            db.session.add(test_mail_user)
+            # Create admin user if it doesn't exist
+            if not existing_admin:
+                from app.extensions import bcrypt
+                admin_user = User(
+                    username='admin',
+                    email='admin@example.com',
+                    password_hash=bcrypt.generate_password_hash('admin123').decode('utf-8'),
+                    role='ADMIN',
+                    is_active=True
+                )
+                db.session.add(admin_user)
+                print("✅ Created admin user: admin/admin123")
+            else:
+                print("ℹ️  Admin user already exists")
             
-            # Create system config
-            system_config = SystemConfig(
-                key='mail_server_name',
-                value='mail.example.com',
-                description='Primary mail server hostname'
-            )
-            db.session.add(system_config)
+            # Create test domain if it doesn't exist
+            if not existing_domain:
+                test_domain = MailDomain(
+                    domain='example.com',
+                    ldap_base_dn='dc=example,dc=com',
+                    is_active=True
+                )
+                db.session.add(test_domain)
+                print("✅ Created test domain: example.com")
+            else:
+                print("ℹ️  Test domain already exists")
+            
+            # Create test mail user if domain exists
+            if existing_domain:
+                existing_mail_user = MailUser.query.filter_by(username='testuser').first()
+                if not existing_mail_user:
+                    from app.extensions import bcrypt
+                    test_mail_user = MailUser(
+                        username='testuser',
+                        domain_id=existing_domain.id,
+                        password_hash=bcrypt.generate_password_hash('testpass123').decode('utf-8'),
+                        quota=104857600,  # 100MB in bytes
+                        home_dir='/home/testuser',
+                        ldap_dn='uid=testuser,dc=example,dc=com',
+                        is_active=True
+                    )
+                    db.session.add(test_mail_user)
+                    print("✅ Created test mail user: testuser/testpass123")
+                else:
+                    print("ℹ️  Test mail user already exists")
+            
+            # Create system config if it doesn't exist
+            if not existing_config:
+                system_config = SystemConfig(
+                    key='mail_server_name',
+                    value='mail.example.com',
+                    description='Primary mail server hostname'
+                )
+                db.session.add(system_config)
+                print("✅ Created system config: mail_server_name")
+            else:
+                print("ℹ️  System config already exists")
             
             db.session.commit()
-            print("✅ Test data seeded successfully")
+            print("✅ Test data seeding completed successfully")
             
         except Exception as e:
             print(f"❌ Failed to seed database: {e}")

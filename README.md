@@ -67,6 +67,7 @@ Default login credentials:
 ### 📚 **Guides & References**
 
 - **[Database Management Guide](docs/DATABASE_MANAGEMENT.md)** - Complete guide to database setup, migrations, recovery, and troubleshooting
+- **[UI and Navigation Guide](docs/UI_NAVIGATION.md)** - User interface improvements, breadcrumb system, and navigation utilities
 - **[API Endpoints](docs/API_ENDPOINTS.md)** - REST API documentation
 - **[Web Endpoints](docs/WEB_ENDPOINTS.md)** - Web interface routes and functionality
 - **[Development Roadmap](docs/development_roadmap.md)** - Planned features and development timeline

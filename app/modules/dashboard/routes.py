@@ -9,6 +9,7 @@ from app.models import MailDomain, MailUser, SystemConfig, AuditLog
 from app.extensions import db
 from app.utils.mail_manager import PostfixManager
 from app.utils.ldap_manager import LDAPManager
+from app.utils.navigation import set_dashboard_breadcrumbs
 from datetime import datetime
 import json
 
@@ -17,6 +18,7 @@ import json
 @login_required
 def index():
     """Main dashboard."""
+    set_dashboard_breadcrumbs()
     # Get system statistics
     total_domains = MailDomain.query.count()
     total_users = MailUser.query.count()
@@ -52,6 +54,7 @@ def index():
 @login_required
 def domains():
     """Mail domains management."""
+    set_dashboard_breadcrumbs('Domains', request.path)
     domains = MailDomain.query.all()
     return render_template('modules/dashboard/domains.html', title='Mail Domains', domains=domains)
 
@@ -60,6 +63,7 @@ def domains():
 @login_required
 def new_domain():
     """Create new mail domain."""
+    set_dashboard_breadcrumbs('New Domain', request.path)
     if request.method == 'POST':
         data = request.get_json()
         
@@ -123,6 +127,7 @@ def new_domain():
 @login_required
 def domain_detail(domain_id):
     """Domain detail view."""
+    set_dashboard_breadcrumbs('Domain Detail', request.path)
     domain = MailDomain.query.get_or_404(domain_id)
     users = MailUser.query.filter_by(domain_id=domain_id).all()
     return render_template('modules/dashboard/domain_detail.html', title=f'Domain: {domain.domain}', domain=domain, users=users)
@@ -132,6 +137,7 @@ def domain_detail(domain_id):
 @login_required
 def users():
     """Mail users management."""
+    set_dashboard_breadcrumbs('Users', request.path)
     users = MailUser.query.join(MailDomain).all()
     return render_template('modules/dashboard/users.html', title='Mail Users', users=users)
 
@@ -140,6 +146,7 @@ def users():
 @login_required
 def new_user():
     """Create new mail user."""
+    set_dashboard_breadcrumbs('New User', request.path)
     if request.method == 'POST':
         data = request.get_json()
         
@@ -198,6 +205,7 @@ def new_user():
 @login_required
 def system():
     """System configuration."""
+    set_dashboard_breadcrumbs('System Configuration', request.path)
     configs = SystemConfig.query.all()
     return render_template('modules/dashboard/system.html', title='System Configuration', configs=configs)
 
@@ -206,6 +214,7 @@ def system():
 @login_required
 def logs():
     """Audit logs."""
+    set_dashboard_breadcrumbs('Audit Logs', request.path)
     page = request.args.get('page', 1, type=int)
     logs = AuditLog.query.order_by(AuditLog.created_at.desc()).paginate(
         page=page, per_page=50, error_out=False)

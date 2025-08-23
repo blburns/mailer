@@ -25,6 +25,15 @@ def init_template_context(app):
         """Inject navigation utility functions into templates"""
         def get_breadcrumbs():
             """Generate breadcrumbs based on current route"""
+            # First check if programmatic breadcrumbs are set
+            from app.utils.navigation import get_breadcrumbs as get_programmatic_breadcrumbs
+            programmatic_breadcrumbs = get_programmatic_breadcrumbs()
+            
+            if programmatic_breadcrumbs:
+                # Convert programmatic breadcrumbs to template format
+                return [(crumb.text, crumb.url) for crumb in programmatic_breadcrumbs]
+            
+            # Fall back to automatic path-based breadcrumbs
             breadcrumbs = []
             path_parts = request.path.strip('/').split('/')
             

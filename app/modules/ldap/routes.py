@@ -9,6 +9,7 @@ from app.models import AuditLog
 from app.extensions import db
 from app.utils.ldap_manager import LDAPManager
 from app.utils.mail_manager import PostfixManager
+from app.utils.navigation import set_ldap_breadcrumbs
 import json
 import os
 
@@ -17,6 +18,7 @@ import os
 @login_required
 def index():
     """LDAP management dashboard."""
+    set_ldap_breadcrumbs()
     return render_template('modules/ldap/index.html', title='LDAP Management')
 
 
@@ -24,6 +26,7 @@ def index():
 @login_required
 def browser():
     """LDAP directory browser."""
+    set_ldap_breadcrumbs('Directory Browser', request.path)
     return render_template('modules/ldap/browser.html', title='LDAP Browser')
 
 
