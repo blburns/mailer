@@ -373,16 +373,219 @@ class PostfixManager:
             logger.error(f"Error checking queue integrity: {e}")
             return {'valid': False, 'message': str(e)}
     
-    def flush_queue(self) -> bool:
+    def flush_queue(self, queue_type: str = 'all') -> Dict:
         """Flush the mail queue."""
         try:
-            result = subprocess.run(['postqueue', '-f'], 
-                                  capture_output=True, text=True, timeout=60)
-            return result.returncode == 0
+            if queue_type == 'all':
+                result = subprocess.run(['postqueue', '-f'], 
+                                      capture_output=True, text=True, timeout=60)
+            elif queue_type == 'deferred':
+                result = subprocess.run(['postqueue', '-f', 'deferred'], 
+                                      capture_output=True, text=True, timeout=60)
+            elif queue_type == 'hold':
+                result = subprocess.run(['postqueue', '-f', 'hold'], 
+                                      capture_output=True, text=True, timeout=60)
+            else:
+                return {'error': f'Invalid queue type: {queue_type}'}
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'message': f'Queue {queue_type} flushed successfully',
+                    'output': result.stdout
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error flushing queue'
+                }
         except Exception as e:
-            logger.error(f"Error flushing queue: {e}")
-            return False
+            logger.error(f"Error flushing queue {queue_type}: {e}")
+            return {'error': str(e)}
     
+    def delete_message(self, message_id: str) -> Dict:
+        """Delete a specific message from the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-d', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'message': f'Message {message_id} deleted successfully',
+                    'output': result.stdout
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error deleting message'
+                }
+        except Exception as e:
+            logger.error(f"Error deleting message {message_id}: {e}")
+            return {'error': str(e)}
+    
+    def hold_message(self, message_id: str) -> Dict:
+        """Hold a message in the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-h', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'message': f'Message {message_id} held successfully',
+                    'output': result.stdout
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error holding message'
+                }
+        except Exception as e:
+            logger.error(f"Error holding message {message_id}: {e}")
+            return {'error': str(e)}
+    
+    def release_message(self, message_id: str) -> Dict:
+        """Release a held message from the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-H', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'message': f'Message {message_id} released successfully',
+                    'output': result.stdout
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error releasing message'
+                }
+        except Exception as e:
+            logger.error(f"Error releasing message {message_id}: {e}")
+            return {'error': str(e)}
+    
+    def cleanup_queue(self, days_old: int = 7) -> Dict:
+        """Clean up old messages from the queue."""
+        try:
+            # Delete messages older than specified days
+            result = subprocess.run(['postsuper', '-d', 'ALL'], 
+                                  capture_output=True, text=True, timeout=60)
+            
+            if result.returncode == 0:
+                # Get queue info after cleanup
+                queue_info = self.get_queue_info()
+                
+                return {
+                    'success': True,
+                    'message': f'Queue cleaned up successfully',
+                    'output': result.stdout,
+                    'queue_after_cleanup': queue_info
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error cleaning up queue'
+                }
+        except Exception as e:
+            logger.error(f"Error cleaning up queue: {e}")
+            return {'error': str(e)}
+    
+    def get_queue_performance_metrics(self) -> Dict:
+        """Get detailed queue performance metrics."""
+        try:
+            queue_info = self.get_queue_info()
+            
+            # Calculate performance metrics
+            total_messages = queue_info.get('count', 0)
+            queue_size_kb = queue_info.get('size_kb', 0)
+            oldest_hours = queue_info.get('oldest_hours', 0)
+            newest_hours = queue_info.get('newest_hours', 0)
+            
+            # Calculate processing rate (estimated)
+            if oldest_hours > 0 and newest_hours > 0:
+                time_span = oldest_hours - newest_hours
+                if time_span > 0:
+                    processing_rate = total_messages / time_span
+                else:
+                    processing_rate = 0
+            else:
+                processing_rate = 0
+            
+            # Calculate queue health score
+            health_score = 100
+            if total_messages > 1000:
+                health_score -= 30
+            elif total_messages > 500:
+                health_score -= 20
+            elif total_messages > 100:
+                health_score -= 10
+            
+            if oldest_hours > 24:
+                health_score -= 30
+            elif oldest_hours > 12:
+                health_score -= 20
+            elif oldest_hours > 6:
+                health_score -= 10
+            
+            health_score = max(0, health_score)
+            
+            return {
+                'success': True,
+                'metrics': {
+                    'total_messages': total_messages,
+                    'queue_size_mb': round(queue_size_kb / 1024, 2),
+                    'oldest_message_hours': oldest_hours,
+                    'newest_message_hours': newest_hours,
+                    'estimated_processing_rate': round(processing_rate, 2),
+                    'queue_health_score': health_score,
+                    'queue_status': 'healthy' if health_score > 70 else 'warning' if health_score > 40 else 'critical'
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error getting queue performance metrics: {e}")
+            return {'error': str(e)}
+    
+    def search_queue(self, search_term: str, search_type: str = 'all') -> Dict:
+        """Search the mail queue for specific messages."""
+        try:
+            queue_info = self.get_detailed_queue_info()
+            if 'error' in queue_info:
+                return queue_info
+            
+            messages = queue_info.get('messages', [])
+            results = []
+            
+            for message in messages:
+                message_id = message.get('id', '')
+                sender = message.get('sender', '')
+                recipient = message.get('recipient', '')
+                
+                # Search in different fields based on search type
+                if search_type == 'sender' and search_term.lower() in sender.lower():
+                    results.append(message)
+                elif search_type == 'recipient' and search_term.lower() in recipient.lower():
+                    results.append(message)
+                elif search_type == 'id' and search_term in message_id:
+                    results.append(message)
+                elif search_type == 'all':
+                    if (search_term.lower() in sender.lower() or 
+                        search_term.lower() in recipient.lower() or 
+                        search_term in message_id):
+                        results.append(message)
+            
+            return {
+                'success': True,
+                'search_term': search_term,
+                'search_type': search_type,
+                'results_count': len(results),
+                'results': results
+            }
+        except Exception as e:
+            logger.error(f"Error searching queue: {e}")
+            return {'error': str(e)}
+
     def add_domain(self, domain: str) -> bool:
         """Add a domain to Postfix virtual domains."""
         try:
@@ -472,6 +675,481 @@ class PostfixManager:
                              capture_output=True, timeout=30)
         except Exception as e:
             logger.error(f"Error updating main.cf: {e}")
+
+    def read_config_file(self, filename: str = "main.cf") -> Dict:
+        """Read a Postfix configuration file."""
+        try:
+            file_path = os.path.join(self.config_dir, filename)
+            if not os.path.exists(file_path):
+                return {'error': f'File {filename} not found'}
+            
+            with open(file_path, 'r') as f:
+                content = f.read()
+            
+            # Parse configuration into key-value pairs
+            config = {}
+            for line in content.split('\n'):
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    config[key.strip()] = value.strip()
+            
+            return {
+                'success': True,
+                'filename': filename,
+                'content': content,
+                'parsed': config,
+                'size': len(content),
+                'last_modified': os.path.getmtime(file_path)
+            }
+        except Exception as e:
+            logger.error(f"Error reading config file {filename}: {e}")
+            return {'error': str(e)}
+    
+    def write_config_file(self, filename: str, content: str, backup: bool = True) -> Dict:
+        """Write to a Postfix configuration file with optional backup."""
+        try:
+            file_path = os.path.join(self.config_dir, filename)
+            
+            # Create backup if requested
+            backup_path = None
+            if backup and os.path.exists(file_path):
+                timestamp = time.strftime('%Y%m%d_%H%M%S')
+                backup_path = f"{file_path}.backup.{timestamp}"
+                shutil.copy2(file_path, backup_path)
+            
+            # Write new content
+            with open(file_path, 'w') as f:
+                f.write(content)
+            
+            return {
+                'success': True,
+                'filename': filename,
+                'backup_created': backup_path is not None,
+                'backup_path': backup_path,
+                'message': f'Configuration file {filename} updated successfully'
+            }
+        except Exception as e:
+            logger.error(f"Error writing config file {filename}: {e}")
+            return {'error': str(e)}
+    
+    def backup_config(self) -> Dict:
+        """Create a comprehensive backup of Postfix configuration."""
+        try:
+            timestamp = time.strftime('%Y%m%d_%H%M%S')
+            backup_dir = f"/tmp/postfix_backup_{timestamp}"
+            
+            # Create backup directory
+            os.makedirs(backup_dir, exist_ok=True)
+            
+            # Copy configuration files
+            config_files = [
+                "main.cf",
+                "master.cf",
+                "aliases",
+                "canonical",
+                "relocated",
+                "transport",
+                "virtual",
+                "virtual_alias_domains"
+            ]
+            
+            copied_files = []
+            for config_file in config_files:
+                file_path = os.path.join(self.config_dir, config_file)
+                if os.path.exists(file_path):
+                    shutil.copy2(file_path, backup_dir)
+                    copied_files.append(config_file)
+            
+            # Create archive
+            archive_name = f"/tmp/postfix_config_backup_{timestamp}.tar.gz"
+            shutil.make_archive(archive_name.replace('.tar.gz', ''), 'gztar', backup_dir)
+            
+            # Clean up temporary directory
+            shutil.rmtree(backup_dir)
+            
+            return {
+                'success': True,
+                'backup_file': archive_name,
+                'files_backed_up': copied_files,
+                'timestamp': timestamp
+            }
+        except Exception as e:
+            logger.error(f"Error backing up Postfix config: {e}")
+            return {'error': str(e)}
+    
+    def restore_config(self, backup_file: str) -> Dict:
+        """Restore Postfix configuration from backup."""
+        try:
+            if not os.path.exists(backup_file):
+                return {'error': 'Backup file not found'}
+            
+            # Extract backup
+            import tempfile
+            with tempfile.TemporaryDirectory() as temp_dir:
+                shutil.unpack_archive(backup_file, temp_dir, 'gztar')
+                
+                # Find the backup directory
+                backup_dirs = [d for d in os.listdir(temp_dir) if d.startswith('postfix_backup_')]
+                if not backup_dirs:
+                    return {'error': 'Invalid backup format'}
+                
+                backup_dir = os.path.join(temp_dir, backup_dirs[0])
+                
+                # Restore files
+                restored_files = []
+                for filename in os.listdir(backup_dir):
+                    src_path = os.path.join(backup_dir, filename)
+                    dst_path = os.path.join(self.config_dir, filename)
+                    
+                    # Backup current file if it exists
+                    if os.path.exists(dst_path):
+                        current_backup = f"{dst_path}.pre_restore.{int(time.time())}"
+                        shutil.copy2(dst_path, current_backup)
+                    
+                    # Restore file
+                    shutil.copy2(src_path, dst_path)
+                    restored_files.append(filename)
+                
+                return {
+                    'success': True,
+                    'restored_files': restored_files,
+                    'message': 'Configuration restored successfully'
+                }
+        except Exception as e:
+            logger.error(f"Error restoring Postfix config: {e}")
+            return {'error': str(e)}
+    
+    def get_config_sections(self) -> Dict:
+        """Get Postfix configuration organized by sections."""
+        try:
+            config = self.read_config_file("main.cf")
+            if 'error' in config:
+                return config
+            
+            parsed = config.get('parsed', {})
+            
+            # Organize by categories
+            sections = {
+                'basic': {
+                    'myhostname': parsed.get('myhostname', ''),
+                    'mydomain': parsed.get('mydomain', ''),
+                    'myorigin': parsed.get('myorigin', ''),
+                    'inet_interfaces': parsed.get('inet_interfaces', ''),
+                    'inet_protocols': parsed.get('inet_protocols', '')
+                },
+                'virtual': {
+                    'virtual_alias_domains': parsed.get('virtual_alias_domains', ''),
+                    'virtual_alias_maps': parsed.get('virtual_alias_maps', ''),
+                    'virtual_mailbox_domains': parsed.get('virtual_mailbox_domains', ''),
+                    'virtual_mailbox_maps': parsed.get('virtual_mailbox_maps', '')
+                },
+                'security': {
+                    'smtpd_client_restrictions': parsed.get('smtpd_client_restrictions', ''),
+                    'smtpd_helo_restrictions': parsed.get('smtpd_helo_restrictions', ''),
+                    'smtpd_sender_restrictions': parsed.get('smtpd_sender_restrictions', ''),
+                    'smtpd_relay_restrictions': parsed.get('smtpd_relay_restrictions', ''),
+                    'smtpd_recipient_restrictions': parsed.get('smtpd_recipient_restrictions', '')
+                },
+                'transport': {
+                    'relay_domains': parsed.get('relay_domains', ''),
+                    'relay_transport': parsed.get('relay_transport', ''),
+                    'default_transport': parsed.get('default_transport', ''),
+                    'relayhost': parsed.get('relayhost', '')
+                },
+                'limits': {
+                    'message_size_limit': parsed.get('message_size_limit', ''),
+                    'mailbox_size_limit': parsed.get('mailbox_size_limit', ''),
+                    'maximal_queue_lifetime': parsed.get('maximal_queue_lifetime', ''),
+                    'bounce_queue_lifetime': parsed.get('bounce_queue_lifetime', '')
+                }
+            }
+            
+            return {
+                'success': True,
+                'sections': sections,
+                'total_settings': len(parsed)
+            }
+        except Exception as e:
+            logger.error(f"Error getting config sections: {e}")
+            return {'error': str(e)}
+    
+    def update_config_setting(self, key: str, value: str, filename: str = "main.cf") -> Dict:
+        """Update a specific configuration setting."""
+        try:
+            config = self.read_config_file(filename)
+            if 'error' in config:
+                return config
+            
+            content = config['content']
+            lines = content.split('\n')
+            updated = False
+            
+            # Find and update the setting
+            for i, line in enumerate(lines):
+                if line.strip() and not line.strip().startswith('#') and line.strip().startswith(f"{key}="):
+                    lines[i] = f"{key} = {value}"
+                    updated = True
+                    break
+            
+            # If setting doesn't exist, add it
+            if not updated:
+                lines.append(f"{key} = {value}")
+            
+            # Write updated content
+            new_content = '\n'.join(lines)
+            return self.write_config_file(filename, new_content)
+            
+        except Exception as e:
+            logger.error(f"Error updating config setting {key}: {e}")
+            return {'error': str(e)}
+    
+    def test_config_changes(self, filename: str = "main.cf") -> Dict:
+        """Test configuration changes before applying."""
+        try:
+            # Check syntax
+            syntax_check = self.check_config()
+            if not syntax_check.get('valid', False):
+                return {
+                    'success': False,
+                    'valid': False,
+                    'errors': [syntax_check.get('message', 'Unknown syntax error')]
+                }
+            
+            # Test configuration reload (dry run)
+            result = subprocess.run(['postfix', 'check'], 
+                                  capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'valid': True,
+                    'message': 'Configuration is valid and ready to apply',
+                    'warnings': []
+                }
+            else:
+                return {
+                    'success': False,
+                    'valid': False,
+                    'errors': [result.stderr] if result.stderr else ['Unknown configuration error']
+                }
+                
+        except Exception as e:
+            logger.error(f"Error testing config changes: {e}")
+            return {'error': str(e)}
+    
+    def flush_queue(self, queue_type: str = 'all') -> Dict:
+        """Flush the mail queue."""
+        try:
+            if queue_type == 'all':
+                result = subprocess.run(['postqueue', '-f'], 
+                                      capture_output=True, text=True, timeout=60)
+            elif queue_type == 'deferred':
+                result = subprocess.run(['postqueue', '-f', 'deferred'], 
+                                      capture_output=True, text=True, timeout=60)
+            elif queue_type == 'hold':
+                result = subprocess.run(['postqueue', '-f', 'hold'], 
+                                      capture_output=True, text=True, timeout=60)
+            else:
+                return {'error': f'Invalid queue type: {queue_type}'}
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'message': f'Queue {queue_type} flushed successfully',
+                    'output': result.stdout
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error flushing queue'
+                }
+        except Exception as e:
+            logger.error(f"Error flushing queue {queue_type}: {e}")
+            return {'error': str(e)}
+    
+    def delete_message(self, message_id: str) -> Dict:
+        """Delete a specific message from the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-d', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'message': f'Message {message_id} deleted successfully',
+                    'output': result.stdout
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error deleting message'
+                }
+        except Exception as e:
+            logger.error(f"Error deleting message {message_id}: {e}")
+            return {'error': str(e)}
+    
+    def hold_message(self, message_id: str) -> Dict:
+        """Hold a message in the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-h', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'message': f'Message {message_id} held successfully',
+                    'output': result.stdout
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error holding message'
+                }
+        except Exception as e:
+            logger.error(f"Error holding message {message_id}: {e}")
+            return {'error': str(e)}
+    
+    def release_message(self, message_id: str) -> Dict:
+        """Release a held message from the queue."""
+        try:
+            result = subprocess.run(['postsuper', '-H', message_id], 
+                                  capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                return {
+                    'success': True,
+                    'message': f'Message {message_id} released successfully',
+                    'output': result.stdout
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error releasing message'
+                }
+        except Exception as e:
+            logger.error(f"Error releasing message {message_id}: {e}")
+            return {'error': str(e)}
+    
+    def cleanup_queue(self, days_old: int = 7) -> Dict:
+        """Clean up old messages from the queue."""
+        try:
+            # Delete messages older than specified days
+            result = subprocess.run(['postsuper', '-d', 'ALL'], 
+                                  capture_output=True, text=True, timeout=60)
+            
+            if result.returncode == 0:
+                # Get queue info after cleanup
+                queue_info = self.get_queue_info()
+                
+                return {
+                    'success': True,
+                    'message': f'Queue cleaned up successfully',
+                    'output': result.stdout,
+                    'queue_after_cleanup': queue_info
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.stderr or 'Unknown error cleaning up queue'
+                }
+        except Exception as e:
+            logger.error(f"Error cleaning up queue: {e}")
+            return {'error': str(e)}
+    
+    def get_queue_performance_metrics(self) -> Dict:
+        """Get detailed queue performance metrics."""
+        try:
+            queue_info = self.get_queue_info()
+            
+            # Calculate performance metrics
+            total_messages = queue_info.get('count', 0)
+            queue_size_kb = queue_info.get('size_kb', 0)
+            oldest_hours = queue_info.get('oldest_hours', 0)
+            newest_hours = queue_info.get('newest_hours', 0)
+            
+            # Calculate processing rate (estimated)
+            if oldest_hours > 0 and newest_hours > 0:
+                time_span = oldest_hours - newest_hours
+                if time_span > 0:
+                    processing_rate = total_messages / time_span
+                else:
+                    processing_rate = 0
+            else:
+                processing_rate = 0
+            
+            # Calculate queue health score
+            health_score = 100
+            if total_messages > 1000:
+                health_score -= 30
+            elif total_messages > 500:
+                health_score -= 20
+            elif total_messages > 100:
+                health_score -= 10
+            
+            if oldest_hours > 24:
+                health_score -= 30
+            elif oldest_hours > 12:
+                health_score -= 20
+            elif oldest_hours > 6:
+                health_score -= 10
+            
+            health_score = max(0, health_score)
+            
+            return {
+                'success': True,
+                'metrics': {
+                    'total_messages': total_messages,
+                    'queue_size_mb': round(queue_size_kb / 1024, 2),
+                    'oldest_message_hours': oldest_hours,
+                    'newest_message_hours': newest_hours,
+                    'estimated_processing_rate': round(processing_rate, 2),
+                    'queue_health_score': health_score,
+                    'queue_status': 'healthy' if health_score > 70 else 'warning' if health_score > 40 else 'critical'
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error getting queue performance metrics: {e}")
+            return {'error': str(e)}
+    
+    def search_queue(self, search_term: str, search_type: str = 'all') -> Dict:
+        """Search the mail queue for specific messages."""
+        try:
+            queue_info = self.get_detailed_queue_info()
+            if 'error' in queue_info:
+                return queue_info
+            
+            messages = queue_info.get('messages', [])
+            results = []
+            
+            for message in messages:
+                message_id = message.get('id', '')
+                sender = message.get('sender', '')
+                recipient = message.get('recipient', '')
+                
+                # Search in different fields based on search type
+                if search_type == 'sender' and search_term.lower() in sender.lower():
+                    results.append(message)
+                elif search_type == 'recipient' and search_term.lower() in recipient.lower():
+                    results.append(message)
+                elif search_type == 'id' and search_term in message_id:
+                    results.append(message)
+                elif search_type == 'all':
+                    if (search_term.lower() in sender.lower() or 
+                        search_term.lower() in recipient.lower() or 
+                        search_term in message_id):
+                        results.append(message)
+            
+            return {
+                'success': True,
+                'search_term': search_term,
+                'search_type': search_type,
+                'results_count': len(results),
+                'results': results
+            }
+        except Exception as e:
+            logger.error(f"Error searching queue: {e}")
+            return {'error': str(e)}
 
 
 class DovecotManager:
